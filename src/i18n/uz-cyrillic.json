@@ -1,0 +1,28 @@
+{
+    "common": {
+        "save": "Сақлаш",
+        "cancel": "Бекор қилиш",
+        "delete": "Ўчириш",
+        "edit": "Таҳрирлаш",
+        "add": "Қўшиш",
+        "search": "Қидирув",
+        "status": "Ҳолати",
+        "actions": "Амаллар"
+    },
+    "dashboard": {
+        "title": "Бошқарув панели",
+        "totalRevenue": "Умумий тушум",
+        "orders": "Буюртмалар",
+        "products": "Маҳсулотлар",
+        "customers": "Мижозлар",
+        "recentOrders": "Сўнгги буюртмалар"
+    },
+    "miniapp": {
+        "addToCart": "Саватчага қўшиш",
+        "checkout": "Расмийлаштириш",
+        "total": "Умумий",
+        "emptyCart": "Саватчангиз бўш",
+        "delivery": "Етказиб бериш",
+        "paymentMethod": "Тўлов тури"
+    }
+}

@@ -1,0 +1,28 @@
+{
+    "common": {
+        "save": "Saqlash",
+        "cancel": "Bekor qilish",
+        "delete": "O'chirish",
+        "edit": "Tahrirlash",
+        "add": "Qo'shish",
+        "search": "Qidiruv",
+        "status": "Holati",
+        "actions": "Amallar"
+    },
+    "dashboard": {
+        "title": "Boshqaruv paneli",
+        "totalRevenue": "Umumiy tushum",
+        "orders": "Buyurtmalar",
+        "products": "Mahsulotlar",
+        "customers": "Mijozlar",
+        "recentOrders": "So'nggi buyurtmalar"
+    },
+    "miniapp": {
+        "addToCart": "Savatchaga qo'shish",
+        "checkout": "Rasmiylashtirish",
+        "total": "Umumiy",
+        "emptyCart": "Savatchangiz bo'sh",
+        "delivery": "Yetkazib berish",
+        "paymentMethod": "To'lov turi"
+    }
+}

@@ -1,0 +1,179 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  NEW
+  PROCESSING
+  SHIPPING
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  TRIAL
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String
+  stores        Store[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Store {
+  id            String    @id @default(cuid())
+  name          String
+  slug          String    @unique
+  logo          String?
+  description   String?
+  ownerId       String
+  owner         User      @relation(fields: [ownerId], references: [id])
+  
+  botToken      String?
+  botUsername   String?
+  
+  categories    Category[]
+  products      Product[]
+  orders        Order[]
+  customers     Customer[]
+  
+  subscription  Subscription?
+  
+  settings      Json?     // Custom settings like work hours, etc.
+  paymentConfig Json?     // Click/Payme credentials
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  storeId   String
+  store     Store     @relation(fields: [storeId], references: [id])
+  parentId  String?
+  parent    Category? @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryToCategory")
+  products  Product[]
+  order     Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  price       Decimal   @db.Decimal(10, 2)
+  image       String?
+  isActive    Boolean   @default(true)
+  
+  storeId     String
+  store       Store     @relation(fields: [storeId], references: [id])
+  
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
+  
+  variants    ProductVariant[]
+  orderItems  OrderItem[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model ProductVariant {
+  id        String    @id @default(cuid())
+  productId String
+  product   Product   @relation(fields: [productId], references: [id])
+  name      String    // e.g., "Size: XL", "Color: Red"
+  price     Decimal?  @db.Decimal(10, 2)
+  stock     Int       @default(0)
+}
+
+model Customer {
+  id              String   @id @default(cuid())
+  telegramId      BigInt   @unique
+  firstName       String?
+  lastName        String?
+  username        String?
+  phone           String?
+  storeId         String
+  store           Store    @relation(fields: [storeId], references: [id])
+  orders          Order[]
+  createdAt       DateTime @default(now())
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     Int         @unique @default(autoincrement())
+  status          OrderStatus @default(NEW)
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentMethod   String      // "CASH", "CLICK", "PAYME"
+  
+  totalAmount     Decimal     @db.Decimal(10, 2)
+  
+  deliveryAddress String?
+  lat             Float?
+  lng             Float?
+  
+  customerId      String
+  customer        Customer    @relation(fields: [customerId], references: [id])
+  
+  storeId         String
+  store           Store       @relation(fields: [storeId], references: [id])
+  
+  items           OrderItem[]
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2)
+}
+
+model SubscriptionPlan {
+  id            String   @id @default(cuid())
+  name          String
+  price         Decimal  @db.Decimal(10, 2)
+  durationDays  Int
+  features      Json
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id        String             @id @default(cuid())
+  storeId   String             @unique
+  store     Store              @relation(fields: [storeId], references: [id])
+  planId    String
+  plan      SubscriptionPlan   @relation(fields: [planId], references: [id])
+  status    SubscriptionStatus @default(TRIAL)
+  startDate DateTime           @default(now())
+  endDate   DateTime
+}
