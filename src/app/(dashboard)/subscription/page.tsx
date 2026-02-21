@@ -1,4 +1,4 @@
-"use strict";
+"use client";
 import { Check, ShieldCheck } from "lucide-react";
 
 const plans = [
