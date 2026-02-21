@@ -6,7 +6,7 @@ export async function GET() {
         // Fetch all active products
         const products = await prisma.product.findMany({
             where: {
-                status: "ACTIVE"
+                isActive: true
             },
             include: {
                 category: true
@@ -15,9 +15,9 @@ export async function GET() {
 
         // Format products for Mini App
         const formattedProducts = products.map((p: any) => ({
-            id: Number(p.id),
+            id: p.id,
             name: p.name,
-            price: p.price.toLocaleString(),
+            price: Number(p.price).toLocaleString(),
             priceNum: Number(p.price),
             image: p.image || "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=300",
             category: p.category?.name || "Boshqa"

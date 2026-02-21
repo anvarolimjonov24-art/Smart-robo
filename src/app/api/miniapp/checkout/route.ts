@@ -43,7 +43,7 @@ export async function POST(req: Request) {
                 paymentStatus: "PENDING",
                 items: {
                     create: items.map((item: any) => ({
-                        productId: item.id.toString(),
+                        productId: item.id,
                         quantity: item.quantity,
                         price: item.price,
                     }))
