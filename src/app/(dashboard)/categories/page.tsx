@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { Plus, Edit, Trash2, GripVertical } from "lucide-react";
 
 const initialCategories = [
