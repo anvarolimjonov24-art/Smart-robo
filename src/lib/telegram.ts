@@ -33,7 +33,7 @@ export const initBotLogic = (botInstance: Telegraf<any>) => {
     botInstance.telegram.setChatMenuButton({
         menuButton: {
             type: 'web_app',
-            text: 'Do\'kon',
+            text: 'Open',
             web_app: { url: `${baseUrl}/miniapp` }
         }
     }).catch(() => { });
