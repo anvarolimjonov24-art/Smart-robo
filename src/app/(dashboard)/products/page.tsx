@@ -1,21 +1,42 @@
 "use client";
-import { useState, useMemo } from "react";
-import { Plus, Search, Edit, Trash2, Eye, Filter, Grid, Package, ArrowDownToLine } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Plus, Search, Edit, Trash2, Eye, Filter, Grid, Package, ArrowDownToLine, Loader2 } from "lucide-react";
 import Link from "next/link";
-
-const allProducts = [
-    { id: 1, name: "iPhone 15 Pro", category: "Smartfonlar", price: "15,000,000 so'm", stock: 12, status: "Sotuvda", image: "https://images.unsplash.com/photo-1696446701796-da61221697cc?w=100" },
-    { id: 2, name: "MacBook Air M2", category: "Noutbuklar", price: "12,500,000 so'm", stock: 5, status: "Kam qoldi", image: "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=100" },
-    { id: 3, name: "AirPods Pro 2", category: "Aksessuarlar", price: "2,800,000 so'm", stock: 25, status: "Sotuvda", image: "https://images.unsplash.com/photo-1588423770574-910ae26c8595?w=100" },
-    { id: 4, name: "Samsung S24 Ultra", category: "Smartfonlar", price: "14,200,000 so'm", stock: 8, status: "Sotuvda", image: "https://images.unsplash.com/photo-1707064434241-11d23b378036?w=100" },
-    { id: 5, name: "Sony WH-1000XM5", category: "Aksessuarlar", price: "3,200,000 so'm", stock: 0, status: "Tugagan", image: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=100" },
-];
 
 export default function ProductsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [selectedStatus, setSelectedStatus] = useState("all");
-    const [products, setProducts] = useState(allProducts);
+    const [products, setProducts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [categories, setCategories] = useState<any[]>([]);
+
+    useEffect(() => {
+        fetchProducts();
+        fetchCategories();
+    }, []);
+
+    const fetchProducts = async () => {
+        try {
+            const res = await fetch("/api/dashboard/products");
+            const data = await res.json();
+            if (Array.isArray(data)) setProducts(data);
+        } catch (error) {
+            console.error("Error fetching products:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch("/api/dashboard/categories");
+            const data = await res.json();
+            if (Array.isArray(data)) setCategories(data);
+        } catch (error) {
+            console.error("Error fetching categories:", error);
+        }
+    };
 
     const filteredProducts = useMemo(() => {
         return products.filter((p) => {
@@ -26,9 +47,18 @@ export default function ProductsPage() {
         });
     }, [products, searchQuery, selectedCategory, selectedStatus]);
 
-    const handleDelete = (id: number, name: string) => {
+    const handleDelete = async (id: string, name: string) => {
         if (confirm(`"${name}" mahsulotini o'chirishga ishonchingiz komilmi?`)) {
-            setProducts((prev) => prev.filter((p) => p.id !== id));
+            try {
+                const res = await fetch(`/api/dashboard/products/${id}`, { method: "DELETE" });
+                if (res.ok) {
+                    setProducts((prev) => prev.filter((p) => p.id !== id));
+                } else {
+                    alert("Xatolik yuz berdi");
+                }
+            } catch (error) {
+                console.error(error);
+            }
         }
     };
 
@@ -41,9 +71,42 @@ export default function ProductsPage() {
     };
 
     const handleAddCategory = () => {
-        const name = prompt("Yangi kategoriya nomi:");
-        if (name) {
-            alert(`✅ "${name}" kategoriyasi yaratildi!`);
+        alert("Kategoriya yaratish oynasi tez orada to'liq ishga tushadi. Hozirda Kategoriyalar sahifasidan foydalaning.");
+    };
+
+    const handleAddProduct = async () => {
+        if (categories.length === 0) {
+            alert("Avval kamida 1 ta kategoriya yaratishingiz kerak!");
+            return;
+        }
+        const name = prompt("Yangi mahsulot nomi:");
+        if (!name) return;
+        const price = prompt("Narxi (raqamda, masalan 1500000):") || "0";
+        const catId = categories[0].id; // Tanlash imkoniyati yo'qligi sababli birinchisini olamiz
+        const storeId = categories[0].storeId;
+
+        try {
+            setLoading(true);
+            const res = await fetch("/api/dashboard/products", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name,
+                    price,
+                    categoryId: catId,
+                    storeId,
+                    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300"
+                })
+            });
+            if (res.ok) {
+                fetchProducts();
+            } else {
+                alert("Mahsulot qo'shishda xatolik");
+                setLoading(false);
+            }
+        } catch (error) {
+            console.error(error);
+            setLoading(false);
         }
     };
 
@@ -63,21 +126,7 @@ export default function ProductsPage() {
                         <span>Kategoriya qo'shish</span>
                     </button>
                     <button
-                        onClick={() => {
-                            const name = prompt("Yangi mahsulot nomi:");
-                            if (name) {
-                                const newProd = {
-                                    id: products.length + 1,
-                                    name,
-                                    category: "Smartfonlar",
-                                    price: "1,000,000 so'm",
-                                    stock: 10,
-                                    status: "Sotuvda",
-                                    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100"
-                                };
-                                setProducts([newProd, ...products]);
-                            }
-                        }}
+                        onClick={handleAddProduct}
                         className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-xl hover:bg-emerald-700 transition-all active:scale-95 font-bold text-sm shadow-lg shadow-emerald-100"
                     >
                         <Plus size={18} />
@@ -119,8 +168,8 @@ export default function ProductsPage() {
                         key={cat}
                         onClick={() => setSelectedCategory(cat)}
                         className={`px-5 py-2.5 rounded-full text-xs font-black transition-all whitespace-nowrap shadow-sm ${selectedCategory === cat
-                                ? "bg-emerald-600 text-white shadow-emerald-100"
-                                : "bg-white text-slate-500 border border-gray-100 hover:bg-gray-50"
+                            ? "bg-emerald-600 text-white shadow-emerald-100"
+                            : "bg-white text-slate-500 border border-gray-100 hover:bg-gray-50"
                             }`}
                     >
                         {cat === "all" ? "Barchasi" : cat}

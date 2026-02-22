@@ -1,10 +1,31 @@
 "use client";
-import React from 'react';
-import { User, MapPin, Bell, Shield, LogOut, ChevronRight, Camera } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, MapPin, Bell, Shield, LogOut, ChevronRight, Camera, Package } from 'lucide-react';
 import { useTelegram } from '@/hooks/useTelegram';
 
 export default function ProfilePage() {
     const { user, hapticImpact } = useTelegram();
+    const [stats, setStats] = useState({ ordersCount: 0, joinDate: null });
+
+    useEffect(() => {
+        if (user?.id) {
+            fetchStats(user.id);
+        } else {
+            fetchStats("853928420"); // Demoga admin ID
+        }
+    }, [user]);
+
+    const fetchStats = async (telegramId: string | number) => {
+        try {
+            const res = await fetch(`/api/miniapp/profile?telegramId=${telegramId}`);
+            const data = await res.json();
+            if (data && typeof data.ordersCount !== 'undefined') {
+                setStats(data);
+            }
+        } catch (error) {
+            console.error("Error fetching stats:", error);
+        }
+    };
 
     const menuItems = [
         { icon: MapPin, label: 'Manzillarim', color: 'text-blue-500', bg: 'bg-blue-50' },
@@ -32,9 +53,13 @@ export default function ProfilePage() {
                     <h1 className="text-xl font-black" style={{ color: "var(--tg-theme-text-color, #0f172a)" }}>
                         {user?.first_name} {user?.last_name || ''}
                     </h1>
-                    <p className="text-xs font-bold" style={{ color: "var(--tg-theme-hint-color, #9ca3af)" }}>
-                        @{user?.username || 'user'}
+                    <p className="text-xs font-bold mb-3" style={{ color: "var(--tg-theme-hint-color, #9ca3af)" }}>
+                        {user?.username ? `@${user.username}` : 'Foydalanuvchi'}
                     </p>
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
+                        <Package size={14} className="text-emerald-500" />
+                        <span className="text-xs font-bold text-emerald-700">{stats.ordersCount} ta xarid</span>
+                    </div>
                 </div>
             </div>
 

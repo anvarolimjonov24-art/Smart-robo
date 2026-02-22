@@ -9,41 +9,64 @@ if (!BOT_TOKEN) {
 
 export const bot = new Telegraf(BOT_TOKEN || '');
 
+// Helper to get Mini App buttons with proper URLs
 export const getMiniAppButtons = () => {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    const miniAppUrl = `${baseUrl}/miniapp`;
+
     return Markup.keyboard([
-        [Markup.button.webApp("Open 🛍️", `${baseUrl}/miniapp`)],
-        [Markup.button.text("Tilni o'zgartirish 🌐"), Markup.button.text("Chat 💬")],
-        [Markup.button.webApp("Mening buyurtmalarim 📦", `${baseUrl}/miniapp/orders`)]
+        ["Do'kon 🛍️"],
+        ["Mening buyurtmalarim 📦"],
+        ["Chat 💬", "Tilni o'zgartirish 🌐"],
     ]).resize();
 };
 
 // Bot Logic & Handlers
 export const initBotLogic = (botInstance: Telegraf<any>) => {
-    // Set bot commands description for Telegram UI
-    botInstance.telegram.setMyCommands([
-        { command: 'start', description: 'Do\'konni ishga tushirish' },
-        { command: 'orders', description: 'Buyurtmalarim' },
-        { command: 'help', description: 'Yordam va qo\'llab quvvatlash' },
-    ]).catch(() => { });
+    // Global Error Handler
+    botInstance.catch((err: any, ctx: any) => {
+        console.error(`Bot error for ${ctx.updateType}:`, err);
+    });
+
+    // Set Menu Button (happens once per cold start or when called)
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    botInstance.telegram.setChatMenuButton({
+        menuButton: {
+            type: 'web_app',
+            text: 'Do\'kon',
+            web_app: { url: `${baseUrl}/miniapp` }
+        }
+    }).catch(() => { });
 
     // Basic command handlers
     botInstance.start((ctx) => {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+        const miniAppUrl = `${baseUrl}/miniapp`;
+
         const welcomeMessage = `
-👋 *Assalomu alaykum, ${ctx.from.first_name}!*
+Assalomu alaykum, ${ctx.from.first_name || 'aziz mijoz'}! 👋
 
-Smart-Robo do'koniga xush kelibsiz. Bizning botimiz orqali siz:
-• Eng so'nggi gadjetlarni ko'rishingiz
-• Onlayn buyurtma berishingiz
-• Buyurtma holatini kuzatib borishingiz mumkin.
+🛍️ *Smart-Robo* — O'zbekistonning eng qulay onlayn robot va gadjetlar do'koniga xush kelibsiz!
 
-👇 *Xaridni boshlash uchun "Open 🛍️" tugmasini yoki pastdagi havolani bosing:*
+Bizda robotlar, aqlli qurilmalar va turli texnika gadjetlari bor. Quyidagi tugmani bosib do'konni oching:
       `;
-        return ctx.replyWithMarkdown(welcomeMessage, getMiniAppButtons());
+
+        const inlineKeyboard = Markup.inlineKeyboard([
+            [Markup.button.webApp("🛒 Do'konni ochish", miniAppUrl)],
+            [Markup.button.webApp("📦 Katalog", miniAppUrl)]
+        ]);
+
+        return ctx.replyWithMarkdown(welcomeMessage, {
+            ...getMiniAppButtons(),
+            reply_markup: {
+                ...getMiniAppButtons().reply_markup,
+                inline_keyboard: inlineKeyboard.reply_markup.inline_keyboard
+            }
+        });
     });
 
-    botInstance.hears("Open 🛍️", (ctx) => {
-        const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    botInstance.hears("Do'kon 🛍️", (ctx) => {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
         const miniAppUrl = `${baseUrl}/miniapp`;
 
         return ctx.reply("Savdo qilishni boshlash uchun quyidagi tugmani bosing:",
@@ -64,7 +87,7 @@ Sizda savollar yoki takliflar bormi? Adminimiz sizga yordam berishga tayyor!
     });
 
     botInstance.hears("Mening buyurtmalarim 📦", (ctx) => {
-        const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
         const ordersUrl = `${baseUrl}/miniapp/orders`;
 
         return ctx.reply("Sizning barcha buyurtmalaringiz shu yerda:",
@@ -95,8 +118,15 @@ Dastur versiyasi: 1.2.0 (Pro)
     });
 };
 
-// Initialize bot logic immediately
-initBotLogic(bot);
+// Global flag to prevent multiple handler registrations in the same process
+let isBotInitialized = false;
+
+export const ensureBotInitialized = (botInstance: Telegraf<any>) => {
+    if (!isBotInitialized) {
+        initBotLogic(botInstance);
+        isBotInitialized = true;
+    }
+};
 
 
 // Helper to send order notification to admin

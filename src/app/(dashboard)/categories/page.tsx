@@ -1,48 +1,101 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Plus, Edit, Trash2, GripVertical } from "lucide-react";
-
-const initialCategories = [
-    { id: 1, name: "Smartfonlar", productsCount: 12, status: "Aktiv", order: 1 },
-    { id: 2, name: "Noutbuklar", productsCount: 5, status: "Aktiv", order: 2 },
-    { id: 3, name: "Aksessuarlar", productsCount: 25, status: "Aktiv", order: 3 },
-    { id: 4, name: "Maishiy texnika", productsCount: 0, status: "Paustda", order: 4 },
-];
+import { Plus, Edit, Trash2, GripVertical, Loader2 } from "lucide-react";
 
 export default function CategoriesPage() {
-    const [categories, setCategories] = useState(initialCategories);
+    const [categories, setCategories] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    // Since we don't have a specific auth system connected in this file, we assume a hardcoded storeId for demonstration, or we fetch from an endpoint.
+    // In our seed file, storeId is available. We'll fetch the first store ID or use a placeholder if needed, but the product page didn't need it because it just creates. Actually, the POST needs storeId. Let's fetch it from stats or another place, or hardcode the one from seed if needed. Actually, let's just make the API handle it or use a default.
+    // Let's get storeId from the categories that exist or a default one.
 
-    const handleAddCategory = () => {
+    useEffect(() => {
+        fetchCategories();
+    }, []);
+
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch("/api/dashboard/categories");
+            const data = await res.json();
+            if (Array.isArray(data)) setCategories(data);
+        } catch (error) {
+            console.error("Error fetching categories:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAddCategory = async () => {
         const name = prompt("Yangi kategoriya nomini kiriting:");
         if (name?.trim()) {
-            const newCat = {
-                id: Date.now(),
-                name: name.trim(),
-                productsCount: 0,
-                status: "Aktiv",
-                order: categories.length + 1,
-            };
-            setCategories((prev) => [...prev, newCat]);
+            const storeId = categories[0]?.storeId || "placeholder_store_id"; // Ideal: should come from user session
+            try {
+                setLoading(true);
+                const res = await fetch("/api/dashboard/categories", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: name.trim(), storeId })
+                });
+                if (res.ok) {
+                    fetchCategories();
+                } else {
+                    alert("Xatolik yuz berdi");
+                    setLoading(false);
+                }
+            } catch (error) {
+                console.error(error);
+                setLoading(false);
+            }
         }
     };
 
-    const handleEdit = (id: number) => {
-        const cat = categories.find((c) => c.id === id);
-        if (!cat) return;
-        const newName = prompt("Kategoriya nomini tahrirlash:", cat.name);
-        if (newName?.trim()) {
-            setCategories((prev) =>
-                prev.map((c) => (c.id === id ? { ...c, name: newName.trim() } : c))
-            );
+    const handleEdit = async (id: string, currentName: string) => {
+        const newName = prompt("Kategoriya nomini tahrirlash:", currentName);
+        if (newName && newName.trim() !== currentName) {
+            try {
+                const res = await fetch(`/api/dashboard/categories/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: newName.trim() })
+                });
+                if (res.ok) {
+                    setCategories((prev) =>
+                        prev.map((c) => (c.id === id ? { ...c, name: newName.trim() } : c))
+                    );
+                } else {
+                    alert("Xatolik yuz berdi");
+                }
+            } catch (error) {
+                console.error(error);
+            }
         }
     };
 
-    const handleDelete = (id: number, name: string) => {
+    const handleDelete = async (id: string, name: string) => {
         if (confirm(`"${name}" kategoriyasini o'chirishga ishonchingiz komilmi?`)) {
-            setCategories((prev) => prev.filter((c) => c.id !== id));
+            try {
+                const res = await fetch(`/api/dashboard/categories/${id}`, { method: "DELETE" });
+                const data = await res.json();
+
+                if (res.ok) {
+                    setCategories((prev) => prev.filter((c) => c.id !== id));
+                } else {
+                    alert(data.error || "Xatolik yuz berdi");
+                }
+            } catch (error) {
+                console.error(error);
+            }
         }
     };
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <Loader2 className="animate-spin text-emerald-600" size={32} />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -98,7 +151,7 @@ export default function CategoriesPage() {
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-1">
                                                 <button
-                                                    onClick={() => handleEdit(cat.id)}
+                                                    onClick={() => handleEdit(cat.id, cat.name)}
                                                     className="p-2 hover:bg-emerald-50 rounded-xl text-gray-300 hover:text-emerald-600 transition-all"
                                                 >
                                                     <Edit size={16} />
