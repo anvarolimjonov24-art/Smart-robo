@@ -1,17 +1,28 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { notifyAdminNewOrder } from "@/lib/telegram";
+import { notifyAdminNewOrder, notifyCustomerNewOrder } from "@/lib/telegram";
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { items, total, delivery, payment, address, initData, user } = body;
+        const { items, total, delivery, payment, address, initData, user: rawUser } = body;
 
-        // In a real app, we would validate initData and extract store/user details
-        // For demonstration, we'll use a hardcoded store or look it up
-        const store = await prisma.store.findFirst();
+        // Foydalanuvchi ob'ekti Telegram tashqarisida yo'q bo'lsa
+        const user = rawUser || {
+            id: 853928420,
+            first_name: "Hurmatli",
+            last_name: "Mijoz",
+            username: ""
+        };
+
+        let store = await prisma.store.findFirst();
         if (!store) {
-            return NextResponse.json({ error: "Store not found" }, { status: 404 });
+            store = await prisma.store.create({
+                data: {
+                    name: "Smart-Robo",
+                    url: "smart-robo.uz"
+                }
+            });
         }
 
         // 1. Create or find customer
@@ -54,6 +65,9 @@ export async function POST(req: Request) {
                 customer: true,
             }
         });
+
+        // Mijozga yangi buyurtma haqida xabar yuborish
+        await notifyCustomerNewOrder(user.id, order.orderNumber);
 
         // 3. Notify Admin
         // In reality, store might have multiple admins or a specific chatId

@@ -235,6 +235,22 @@ export const notifyAdminNewOrder = async (chatId: string, orderData: any) => {
     }
 };
 
+// Mijozga yangi buyurtma qabul qilinganligi haqida xabar
+export const notifyCustomerNewOrder = async (chatId: number | string, orderNumber: string) => {
+    const message =
+        `✅ *Buyurtma qabul qilindi!*\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `📋 Buyurtma: *#${orderNumber}*\n\n` +
+        `Buyurtmangiz tez orada tayyor bo'ladi, xaridingiz uchun rahmat!\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━`;
+
+    try {
+        await bot.telegram.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+    } catch (err) {
+        console.error('[BOT] Customer order notification failed:', err);
+    }
+};
+
 // Mijozga buyurtma holati o'zgargani haqida xabar
 export const notifyCustomerStatusUpdate = async (chatId: number, orderId: string, status: string) => {
     const statusInfo: Record<string, { emoji: string; label: string; description: string }> = {

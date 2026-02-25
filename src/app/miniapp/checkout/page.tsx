@@ -93,9 +93,6 @@ export default function CheckoutPage() {
 
             if (!response.ok) throw new Error(result.error || "Xatolik yuz berdi");
 
-            // Send data to Telegram bot (native method)
-            sendData({ ...orderData, orderId: result.orderId });
-
             hapticNotification("success");
 
             showPopup(
