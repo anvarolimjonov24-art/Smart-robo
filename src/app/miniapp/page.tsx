@@ -49,8 +49,8 @@ export default function MiniAppPage() {
         addToCart({
             id: product.id,
             name: product.name,
-            price: product.price,
-            priceNum: product.priceNum,
+            price: product.price.toString(),
+            priceNum: Number(product.price),
             image: product.image,
         });
         hapticNotification("success");

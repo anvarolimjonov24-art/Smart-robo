@@ -70,24 +70,7 @@ const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
     const [state, dispatch] = useReducer(cartReducer, {
-        items: [
-            {
-                id: 1,
-                name: "iPhone 15 Pro",
-                price: "15,000,000",
-                priceNum: 15000000,
-                quantity: 1,
-                image: "https://images.unsplash.com/photo-1696446701796-da61221697cc?w=200",
-            },
-            {
-                id: 3,
-                name: "AirPods Pro 2",
-                price: "2,800,000",
-                priceNum: 2800000,
-                quantity: 2,
-                image: "https://images.unsplash.com/photo-1588423770574-910ae26c8595?w=200",
-            },
-        ],
+        items: [],
     });
 
     const addToCart = useCallback((item: Omit<CartItem, "quantity">) => {
