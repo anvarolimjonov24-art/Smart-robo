@@ -9,116 +9,199 @@ if (!BOT_TOKEN) {
 
 export const bot = new Telegraf(BOT_TOKEN || '');
 
-// Helper to get Mini App buttons with proper URLs
+// ─── Helper: Base URL ────────────────────────────────────────────────
+const getBaseUrl = () =>
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXTAUTH_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
+// ─── Helper: Reply Keyboard (pastki menyudagi doimiy tugmalar) ──────
 export const getMiniAppButtons = () => {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-    const miniAppUrl = `${baseUrl}/miniapp`;
+    const miniAppUrl = `${getBaseUrl()}/miniapp`;
 
     return Markup.keyboard([
         [Markup.button.webApp("🛍️ Do'kon", miniAppUrl)],
-        [Markup.button.webApp("📦 Buyurtmalarim", `${miniAppUrl}/orders`)],
-        [Markup.button.webApp("👤 Profil", `${miniAppUrl}/profile`)],
+        [
+            Markup.button.webApp("📦 Buyurtmalarim", `${miniAppUrl}/orders`),
+            Markup.button.webApp("👤 Profil", `${miniAppUrl}/profile`),
+        ],
+        ["💬 Yordam", "ℹ️ Biz haqimizda"],
     ]).resize();
 };
 
-// Bot Logic & Handlers
+// ═══════════════════════════════════════════════════════════════════════
+// BOT LOGIC — Professional Handlers
+// ═══════════════════════════════════════════════════════════════════════
 export const initBotLogic = (botInstance: Telegraf<any>) => {
-    // Global Error Handler
+
+    // ─── Global Error Handler ────────────────────────────────────────
     botInstance.catch((err: any, ctx: any) => {
-        console.error(`Bot error for ${ctx.updateType}:`, err);
+        console.error(`[BOT ERROR] ${ctx.updateType}:`, err);
     });
 
-    // Set Menu Button (happens once per cold start or when called)
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    // ─── Menu Button (Telegram chat ichidagi "Menu" tugmasi) ─────────
     botInstance.telegram.setChatMenuButton({
         menuButton: {
             type: 'web_app',
-            text: 'Open',
-            web_app: { url: `${baseUrl}/miniapp` }
+            text: "🛒 Do'kon",
+            web_app: { url: `${getBaseUrl()}/miniapp` }
         }
     }).catch(() => { });
 
-    // Basic command handlers
-    botInstance.start((ctx) => {
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-        const miniAppUrl = `${baseUrl}/miniapp`;
+    // ═════════════════════════════════════════════════════════════════
+    // /start — Asosiy xush kelibsiz xabari
+    // ═════════════════════════════════════════════════════════════════
+    botInstance.start(async (ctx) => {
+        const miniAppUrl = `${getBaseUrl()}/miniapp`;
+        const name = ctx.from.first_name || 'aziz mijoz';
 
-        const welcomeMessage = `
-Assalomu alaykum, ${ctx.from.first_name || 'aziz mijoz'}! 👋
+        const welcomeText =
+            `Assalomu alaykum, *${name}*! 👋\n\n` +
+            `🤖 *Smart-Robo* do'koniga xush kelibsiz!\n\n` +
+            `Robotlar, aqlli qurilmalar va gadjetlarning eng katta tanlovi.\n` +
+            `Pastdagi tugmalar orqali xarid qilishingiz mumkin:\n\n` +
+            `🛍️ *Do'kon* — mahsulotlarni ko'rish va xarid qilish\n` +
+            `📦 *Buyurtmalarim* — buyurtmalar tarixini ko'rish\n` +
+            `👤 *Profil* — shaxsiy ma'lumotlaringiz\n` +
+            `💬 *Yordam* — savollaringizga javob\n\n` +
+            `Yoki quyidagi tugmani bosing 👇`;
 
-🛍️ *Smart-Robo* — O'zbekistonning eng qulay onlayn robot va gadjetlar do'koniga xush kelibsiz!
+        // Birinchi: Reply keyboard (pastki doimiy tugmalar)
+        await ctx.replyWithMarkdown(welcomeText, getMiniAppButtons());
 
-Bizda robotlar, aqlli qurilmalar va turli texnika gadjetlari bor. Quyidagi tugmani bosib do'konni oching:
-      `;
-
-        const inlineKeyboard = Markup.inlineKeyboard([
+        // Ikkinchi: Inline keyboard (ichki tugmalar — xabar ichida)
+        await ctx.reply("⚡ Tezroq boshlash uchun:", Markup.inlineKeyboard([
             [Markup.button.webApp("🛒 Do'konni ochish", miniAppUrl)],
-            [Markup.button.webApp("📦 Katalog", miniAppUrl)]
-        ]);
-
-        return ctx.replyWithMarkdown(welcomeMessage, {
-            ...getMiniAppButtons(),
-            reply_markup: {
-                ...getMiniAppButtons().reply_markup,
-                inline_keyboard: inlineKeyboard.reply_markup.inline_keyboard
-            }
-        });
+            [Markup.button.webApp("🔥 Yangi mahsulotlar", miniAppUrl)],
+        ]));
     });
 
-    botInstance.hears("Do'kon 🛍️", (ctx) => {
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-        const miniAppUrl = `${baseUrl}/miniapp`;
+    // ═════════════════════════════════════════════════════════════════
+    // 💬 Yordam tugmasi
+    // ═════════════════════════════════════════════════════════════════
+    botInstance.hears("💬 Yordam", async (ctx) => {
+        const helpText =
+            `❓ *Yordam markazi*\n\n` +
+            `Quyidagi buyruqlar mavjud:\n\n` +
+            `/start — Botni qayta ishga tushirish\n` +
+            `/help — Yordam\n` +
+            `/about — Biz haqimizda\n` +
+            `/contact — Aloqa ma'lumotlari\n\n` +
+            `📞 *Texnik yordam:*\n` +
+            `Admin: @smart\\_robo\\_admin\n` +
+            `📧 Email: support@smartrobo.uz\n\n` +
+            `🕐 Ish vaqti: 09:00 — 21:00`;
 
-        return ctx.reply("Savdo qilishni boshlash uchun quyidagi tugmani bosing:",
+        await ctx.replyWithMarkdown(helpText);
+    });
+
+    // ═════════════════════════════════════════════════════════════════
+    // ℹ️ Biz haqimizda tugmasi
+    // ═════════════════════════════════════════════════════════════════
+    botInstance.hears("ℹ️ Biz haqimizda", async (ctx) => {
+        const aboutText =
+            `🤖 *Smart-Robo — Robot va gadjetlar olami*\n\n` +
+            `Smart-Robo — bu O'zbekistondagi eng yirik robotlar va texnologik gadjetlar onlayn do'konidir.\n\n` +
+            `📍 *Manzil:* Toshkent sh., Almazar tumani\n` +
+            `📞 *Telefon:* +998 90 123 45 67\n` +
+            `🌐 *Website:* smartrobo.uz\n` +
+            `📱 *Instagram:* @smart_robo_uz\n\n` +
+            `🚚 Yetkazib berish: O'zbekiston bo'ylab 1-3 kun\n` +
+            `💳 To'lov: Naqd, Click, Payme\n` +
+            `🔄 Qaytarish: 14 kun ichida\n\n` +
+            `❤️ Xaridlaringiz uchun rahmat!`;
+
+        await ctx.replyWithMarkdown(aboutText, Markup.inlineKeyboard([
+            [Markup.button.url("🌐 Website", "https://smart-robo.vercel.app")],
+            [Markup.button.url("📱 Instagram", "https://instagram.com/smart_robo_uz")],
+        ]));
+    });
+
+    // ═════════════════════════════════════════════════════════════════
+    // /help buyrug'i
+    // ═════════════════════════════════════════════════════════════════
+    botInstance.help(async (ctx) => {
+        const miniAppUrl = `${getBaseUrl()}/miniapp`;
+
+        const helpText =
+            `📖 *Smart-Robo qo'llanmasi*\n\n` +
+            `*Qanday xarid qilish kerak?*\n` +
+            `1️⃣ «🛍️ Do'kon» tugmasini bosing\n` +
+            `2️⃣ Mahsulotni tanlang va savatchaga qo'shing\n` +
+            `3️⃣ Savatchaga o'tib, buyurtmani rasmiylashtirinng\n` +
+            `4️⃣ To'lov usulini tanlang va tasdiqlang\n\n` +
+            `*Buyurtma holati:*\n` +
+            `🆕 Yangi — buyurtma qabul qilindi\n` +
+            `👨‍🍳 Tayyorlanmoqda — yig'ilmoqda\n` +
+            `🚀 Yo'lda — kuryer yetkazmoqda\n` +
+            `✅ Yetkazildi — buyurtma topshirildi\n\n` +
+            `Dastur versiyasi: *2.0.0 PRO*`;
+
+        await ctx.replyWithMarkdown(helpText, Markup.inlineKeyboard([
+            [Markup.button.webApp("🛍️ Do'konga o'tish", miniAppUrl)],
+        ]));
+    });
+
+    // ═════════════════════════════════════════════════════════════════
+    // /about buyrug'i
+    // ═════════════════════════════════════════════════════════════════
+    botInstance.command('about', async (ctx) => {
+        return ctx.replyWithMarkdown(
+            `🤖 *Smart-Robo v2.0 PRO*\n\n` +
+            `O'zbekistondagi eng zamonaviy robot va gadjetlar do'koni.\n\n` +
+            `📦 1000+ mahsulot\n🚚 Tezkor yetkazib berish\n💳 Qulay to'lov\n⭐ 100% asl mahsulot`,
             Markup.inlineKeyboard([
-                [Markup.button.webApp("Do'konni ochish 🛒", miniAppUrl)]
+                [Markup.button.url("🌐 Website", "https://smart-robo.vercel.app")],
             ])
         );
     });
 
-    botInstance.hears("Chat 💬", (ctx) => {
-        return ctx.replyWithMarkdown(`
-💬 *Admin bilan bog'lanish*
-
-Sizda savollar yoki takliflar bormi? Adminimiz sizga yordam berishga tayyor!
-
-👤 Admin: @smart_robo_admin
-        `);
+    // ═════════════════════════════════════════════════════════════════
+    // /contact buyrug'i
+    // ═════════════════════════════════════════════════════════════════
+    botInstance.command('contact', async (ctx) => {
+        return ctx.replyWithMarkdown(
+            `📞 *Aloqa ma'lumotlari*\n\n` +
+            `📱 Telefon: +998 90 123 45 67\n` +
+            `📧 Email: support@smartrobo.uz\n` +
+            `👤 Admin: @smart\\_robo\\_admin\n` +
+            `📍 Manzil: Toshkent, Almazar tumani\n\n` +
+            `🕐 Ish vaqti: 09:00 — 21:00 (har kuni)`
+        );
     });
 
-    botInstance.hears("Mening buyurtmalarim 📦", (ctx) => {
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-        const ordersUrl = `${baseUrl}/miniapp/orders`;
+    // ═════════════════════════════════════════════════════════════════
+    // /orders buyrug'i
+    // ═════════════════════════════════════════════════════════════════
+    botInstance.command('orders', async (ctx) => {
+        const ordersUrl = `${getBaseUrl()}/miniapp/orders`;
 
-        return ctx.reply("Sizning barcha buyurtmalaringiz shu yerda:",
+        return ctx.reply(
+            "📦 Barcha buyurtmalaringizni bu yerda ko'rishingiz mumkin:",
             Markup.inlineKeyboard([
-                [Markup.button.webApp("Buyurtmalarni ko'rish 📦", ordersUrl)]
+                [Markup.button.webApp("📦 Buyurtmalarni ko'rish", ordersUrl)],
             ])
         );
     });
 
-    botInstance.hears("Tilni o'zgartirish 🌐", (ctx) => {
-        return ctx.reply("Hozircha faqat O'zbek tili mavjud. Tez orada boshqa tillar ham qo'shiladi! 🇺🇿");
-    });
+    // ═════════════════════════════════════════════════════════════════
+    // Noma'lum xabarga javob
+    // ═════════════════════════════════════════════════════════════════
+    botInstance.on('text', async (ctx) => {
+        const miniAppUrl = `${getBaseUrl()}/miniapp`;
 
-    botInstance.command('orders', (ctx) => {
-        return ctx.reply("📦 Buyurtmalaringiz ro'yxatini ko'rish uchun Do'kon elementidagi 'Profil' bo'limiga o'ting.");
-    });
-
-    botInstance.help((ctx) => {
-        const helpMessage = `
-❓ *Yordam kerakmi?*
-
-Agar sizda savollar bo'lsa yoki muammoga duch kelsangiz, adminimiz bilan bog'laning:
-👤 @smart_robo_admin
-
-Dastur versiyasi: 1.2.0 (Pro)
-      `;
-        return ctx.replyWithMarkdown(helpMessage);
+        await ctx.replyWithMarkdown(
+            `🤔 Kechirasiz, men bu xabarni tushunmadim.\n\n` +
+            `Quyidagi tugmalar orqali do'konni ishlatishingiz mumkin 👇\n` +
+            `Yoki /help buyrug'ini yozing.`,
+            Markup.inlineKeyboard([
+                [Markup.button.webApp("🛍️ Do'konga o'tish", miniAppUrl)],
+            ])
+        );
     });
 };
 
-// Global flag to prevent multiple handler registrations in the same process
+// ─── Initialization guard ────────────────────────────────────────────
 let isBotInitialized = false;
 
 export const ensureBotInitialized = (botInstance: Telegraf<any>) => {
@@ -128,39 +211,68 @@ export const ensureBotInitialized = (botInstance: Telegraf<any>) => {
     }
 };
 
+// ═══════════════════════════════════════════════════════════════════════
+// NOTIFICATION HELPERS — Admin va mijozlarga xabar yuborish
+// ═══════════════════════════════════════════════════════════════════════
 
-// Helper to send order notification to admin
+// Adminga yangi buyurtma haqida xabar
 export const notifyAdminNewOrder = async (chatId: string, orderData: any) => {
-    const message = `
-🔔 *Yangi buyurtma!* 
-#ID${orderData.orderNumber}
+    const message =
+        `🔔 *YANGI BUYURTMA!*\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `📋 Buyurtma: *#${orderData.orderNumber}*\n` +
+        `👤 Mijoz: ${orderData.customerName}\n` +
+        `📞 Telefon: ${orderData.customerPhone}\n\n` +
+        `💰 Summa: *${orderData.totalAmount} so'm*\n` +
+        `📦 Mahsulotlar: ${orderData.itemCount} ta\n\n` +
+        `📍 Manzil: ${orderData.deliveryAddress || 'Ko\'rsatilmagan'}\n` +
+        `━━━━━━━━━━━━━━━━━━━━`;
 
-👤 Mijoz: ${orderData.customerName}
-📞 Tel: ${orderData.customerPhone}
-💰 Summa: ${orderData.totalAmount} so'm
-📦 Mahsulotlar: ${orderData.itemCount} ta
-
-📍 Manzil: ${orderData.deliveryAddress || 'Bot orqali yuborilgan'}
-  `;
-
-    await bot.telegram.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+    try {
+        await bot.telegram.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+    } catch (err) {
+        console.error('[BOT] Admin notification failed:', err);
+    }
 };
 
-// Helper to notify customer about status change
+// Mijozga buyurtma holati o'zgargani haqida xabar
 export const notifyCustomerStatusUpdate = async (chatId: number, orderId: string, status: string) => {
-    const statusNames: Record<string, string> = {
-        'PROCESSING': 'Tayyorlanmoqda 👨‍🍳',
-        'SHIPPING': 'Yo\'lda 🚀',
-        'DELIVERED': 'Yetkazib berildi ✅',
-        'CANCELLED': 'Bekor qilindi ❌'
+    const statusInfo: Record<string, { emoji: string; label: string; description: string }> = {
+        'PROCESSING': {
+            emoji: '👨‍🍳',
+            label: 'Tayyorlanmoqda',
+            description: 'Buyurtmangiz yig\'ilmoqda. Tez orada yo\'lga chiqadi!'
+        },
+        'SHIPPING': {
+            emoji: '🚀',
+            label: 'Yo\'lda',
+            description: 'Kuryer buyurtmangizni yetkazib berish yo\'lida!'
+        },
+        'DELIVERED': {
+            emoji: '✅',
+            label: 'Yetkazib berildi',
+            description: 'Buyurtmangiz muvaffaqiyatli topshirildi. Xaridingiz uchun rahmat!'
+        },
+        'CANCELLED': {
+            emoji: '❌',
+            label: 'Bekor qilindi',
+            description: 'Buyurtma bekor qilindi. Savollar bo\'lsa, /help buyrug\'ini yozing.'
+        }
     };
 
-    const message = `
-📦 *Buyurtma holati o'zgardi!*
-ID: #${orderId}
+    const info = statusInfo[status] || { emoji: '📦', label: status, description: '' };
 
-Yangi holat: *${statusNames[status] || status}*
-  `;
+    const message =
+        `${info.emoji} *Buyurtma holati yangilandi!*\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `📋 Buyurtma: *#${orderId}*\n` +
+        `📊 Holat: *${info.label}*\n\n` +
+        `${info.description}\n` +
+        `━━━━━━━━━━━━━━━━━━━━`;
 
-    await bot.telegram.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+    try {
+        await bot.telegram.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+    } catch (err) {
+        console.error('[BOT] Customer notification failed:', err);
+    }
 };
