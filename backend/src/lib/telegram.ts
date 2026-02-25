@@ -15,9 +15,9 @@ export const getMiniAppButtons = () => {
     const miniAppUrl = `${baseUrl}/miniapp`;
 
     return Markup.keyboard([
-        ["Do'kon 🛍️"],
-        ["Mening buyurtmalarim 📦"],
-        ["Chat 💬", "Tilni o'zgartirish 🌐"],
+        [Markup.button.webApp("🛍️ Do'kon", miniAppUrl)],
+        [Markup.button.webApp("📦 Buyurtmalarim", `${miniAppUrl}/orders`)],
+        [Markup.button.webApp("👤 Profil", `${miniAppUrl}/profile`)],
     ]).resize();
 };
 
