@@ -16,7 +16,7 @@ export default function CheckoutPage() {
     const [locationText, setLocationText] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { items, getTotalFormatted, clearCart, getTotal } = useCart();
-    const { hapticSelection, hapticNotification, hapticImpact, sendData, showPopup, showMainButton, hideMainButton, setMainButtonLoading, close } = useTelegram();
+    const { hapticSelection, hapticNotification, hapticImpact, sendData, showPopup, showMainButton, hideMainButton, setMainButtonLoading, close, user: tgUser, initData: tgInitData } = useTelegram();
     const totalFormatted = getTotalFormatted();
 
     // Telegram MainButton for placing order
@@ -79,8 +79,8 @@ export default function CheckoutPage() {
                 delivery,
                 payment,
                 address: address || locationText,
-                user: useTelegram().user, // Extract user info
-                initData: useTelegram().initData,
+                user: tgUser, // Use extracted user info
+                initData: tgInitData, // Use extracted initData
             };
 
             const response = await fetch("/api/miniapp/checkout", {

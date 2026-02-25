@@ -39,7 +39,7 @@ export default function MiniAppPage() {
 
     const filteredProducts = useMemo(() => {
         return allProducts.filter((p) => {
-            const matchesCategory = activeCategory === "Barchasi" || p.category === activeCategory;
+            const matchesCategory = activeCategory === "Barchasi" || p.category?.name === activeCategory;
             const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
             return matchesCategory && matchesSearch;
         });
@@ -121,7 +121,7 @@ export default function MiniAppPage() {
             {/* AKSU Style Products Grid */}
             <div className="px-4 space-y-10 mt-4">
                 {categories.filter(c => c !== "Barchasi").map((cat) => {
-                    const productsInCat = filteredProducts.filter(p => p.category === cat);
+                    const productsInCat = filteredProducts.filter(p => p.category?.name === cat);
                     if (productsInCat.length === 0) return null;
 
                     return (
