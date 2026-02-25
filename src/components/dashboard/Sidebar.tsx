@@ -170,7 +170,7 @@ export default function Sidebar() {
             </div>
 
             <div className="p-4 text-[10px] text-slate-300 font-bold text-center border-t border-slate-50 uppercase tracking-widest">
-                &copy; 2024 Smart-Robo V1.2
+                &copy; 2024 Smart-Robo v2.0 PRO
             </div>
         </aside>
     );

@@ -41,8 +41,8 @@ export default function ProductsPage() {
     const filteredProducts = useMemo(() => {
         return products.filter((p) => {
             const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-            const matchesCategory = selectedCategory === "all" || p.category === selectedCategory;
-            const matchesStatus = selectedStatus === "all" || p.status === selectedStatus;
+            const matchesCategory = selectedCategory === "all" || p.category?.name === selectedCategory;
+            const matchesStatus = selectedStatus === "all" || (p.isActive ? "Sotuvda" : "Tugagan") === selectedStatus;
             return matchesSearch && matchesCategory && matchesStatus;
         });
     }, [products, searchQuery, selectedCategory, selectedStatus]);
@@ -163,16 +163,25 @@ export default function ProductsPage() {
 
             {/* Category Chips */}
             <div className="flex gap-2 overflow-x-auto no-scrollbar py-2">
-                {["all", "Smartfonlar", "Noutbuklar", "Aksessuarlar"].map((cat) => (
+                <button
+                    onClick={() => setSelectedCategory("all")}
+                    className={`px-5 py-2.5 rounded-full text-xs font-black transition-all whitespace-nowrap shadow-sm ${selectedCategory === "all"
+                        ? "bg-emerald-600 text-white shadow-emerald-100"
+                        : "bg-white text-slate-500 border border-gray-100 hover:bg-gray-50"
+                        }`}
+                >
+                    Barchasi
+                </button>
+                {categories.map((cat) => (
                     <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`px-5 py-2.5 rounded-full text-xs font-black transition-all whitespace-nowrap shadow-sm ${selectedCategory === cat
+                        key={cat.id}
+                        onClick={() => setSelectedCategory(cat.name)}
+                        className={`px-5 py-2.5 rounded-full text-xs font-black transition-all whitespace-nowrap shadow-sm ${selectedCategory === cat.name
                             ? "bg-emerald-600 text-white shadow-emerald-100"
                             : "bg-white text-slate-500 border border-gray-100 hover:bg-gray-50"
                             }`}
                     >
-                        {cat === "all" ? "Barchasi" : cat}
+                        {cat.name}
                     </button>
                 ))}
             </div>
@@ -216,7 +225,7 @@ export default function ProductsPage() {
                                     <h4 className="font-bold text-slate-800 mb-1 group-hover:text-emerald-600 transition-colors uppercase tracking-tight text-sm">{product.name}</h4>
                                     <div className="flex justify-between items-center text-xs font-medium">
                                         <span className="text-emerald-600 font-black">{product.price}</span>
-                                        <span className="text-gray-300 uppercase tracking-widest">{product.category}</span>
+                                        <span className="text-gray-300 uppercase tracking-widest">{product.category?.name || ''}</span>
                                     </div>
                                 </div>
                             ))}
