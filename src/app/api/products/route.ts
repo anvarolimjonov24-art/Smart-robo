@@ -3,8 +3,16 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
     try {
+        const store = await prisma.store.findFirst();
+        if (!store) {
+            return NextResponse.json([]);
+        }
+
         const products = await prisma.product.findMany({
-            where: { isActive: true },
+            where: {
+                isActive: true,
+                storeId: store.id
+            },
             include: {
                 category: true
             },

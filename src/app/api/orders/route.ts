@@ -6,6 +6,12 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { telegramId, items, totalAmount, customerName, customerPhone, deliveryAddress } = body;
 
+        // 0. Find a default store (Single Source of Truth)
+        const store = await prisma.store.findFirst();
+        if (!store) {
+            return NextResponse.json({ error: "Hech qanday do'kon topilmadi. Avval dashboardda do'kon yarating." }, { status: 400 });
+        }
+
         // 1. Find or create customer
         let customer = await prisma.customer.findUnique({
             where: { telegramId: BigInt(telegramId) }
@@ -16,13 +22,15 @@ export async function POST(req: Request) {
                 data: {
                     telegramId: BigInt(telegramId),
                     firstName: customerName,
-                    phone: customerPhone
+                    phone: customerPhone,
+                    store: { connect: { id: store.id } }
                 }
             });
         }
 
         // 2. Create order
         const lastOrder = await prisma.order.findFirst({
+            where: { storeId: store.id },
             orderBy: { orderNumber: "desc" }
         });
         const nextOrderNumber = (lastOrder?.orderNumber || 1000) + 1;
@@ -32,7 +40,9 @@ export async function POST(req: Request) {
                 orderNumber: nextOrderNumber,
                 totalAmount: totalAmount,
                 status: "NEW",
-                customerId: customer.id,
+                paymentMethod: "CASH", // Default to Cash
+                customer: { connect: { id: customer.id } },
+                store: { connect: { id: store.id } },
                 items: {
                     create: items.map((item: any) => ({
                         productId: item.productId,
