@@ -18,11 +18,14 @@ export default function MiniAppPage() {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const response = await fetch("/api/miniapp/products");
-                const data = await response.json();
-                if (data.products) {
-                    setAllProducts(data.products);
-                    setCategories(data.categories);
+                const res = await fetch("/api/products");
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    setAllProducts(data);
+                    // Extract unique categories from products if they contain category objects
+                    const cats = Array.from(new Set(data.map((p: any) => p.category?.name))).filter(Boolean);
+                    // Prepend "Barchasi" to the categories list
+                    setCategories(["Barchasi", ...cats]);
                 }
             } catch (error) {
                 console.error("Error fetching products:", error);

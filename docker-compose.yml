@@ -1,16 +1,43 @@
 services:
-  postgres:
+  db:
     image: postgres:15-alpine
-    container_name: robosell-db
+    container_name: smart-robo-db
     restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: mysecretpassword
-      POSTGRES_DB: robosell
+      POSTGRES_DB: smartrobo
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smart-robo-backend
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://postgres:mysecretpassword@db:5432/smartrobo
+      NEXTAUTH_SECRET: your-secret-here
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    container_name: smart-robo-bot
+    restart: always
+    environment:
+      BOT_TOKEN: 8578256137:AAHZ89cc4wiMLnsZKMuU99BgusoQYCm0AG0
+      API_URL: http://backend:3000/api
+      MINI_APP_URL: https://smart-robo.vercel.app/miniapp
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
