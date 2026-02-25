@@ -64,17 +64,17 @@ export default function MiniAppPage() {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
                 <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-sm font-bold opacity-60">Загрузка...</p>
+                <p className="text-sm font-bold opacity-60">Yuklanmoqda...</p>
             </div>
         );
     }
 
     return (
         <div className="min-h-screen animate-in fade-in duration-500 pb-32 bg-white">
-            {/* AKSU Header */}
+            {/* Smart-Robo Header */}
             <header className="p-4 flex flex-col items-center text-center relative">
-                <h1 className="text-sm font-black uppercase tracking-widest text-[#1a1a1a]">AKSU</h1>
-                <p className="text-[10px] text-gray-400 font-medium lowercase">мини-приложение</p>
+                <h1 className="text-sm font-black uppercase tracking-widest text-[#1a1a1a]">Smart-Robo</h1>
+                <p className="text-[10px] text-gray-400 font-medium lowercase">onlayn do'kon</p>
                 <button className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                     <span className="text-blue-500 text-lg font-bold">...</span>
                 </button>
@@ -82,11 +82,11 @@ export default function MiniAppPage() {
 
             {/* Address Prompt */}
             <div className="px-4 py-2 text-center space-y-2">
-                <p className="text-[11px] font-bold text-gray-400">Заказать по этому адресу?</p>
-                <h2 className="text-sm font-black text-[#1a1a1a]">микрорайон Алмазар, 6/7</h2>
+                <p className="text-[11px] font-bold text-gray-400">Yetkazib berish manzili</p>
+                <h2 className="text-sm font-black text-[#1a1a1a]">Toshkent, Almazar tumani</h2>
                 <div className="flex items-center justify-center gap-2 mt-2">
-                    <button className="px-6 py-2 rounded-xl bg-gray-100 text-[12px] font-bold text-gray-500 active:scale-95 transition-all">Нет</button>
-                    <button className="px-8 py-2 rounded-xl bg-[#4b611e] text-[12px] font-bold text-white active:scale-95 transition-all shadow-sm">Да</button>
+                    <button className="px-6 py-2 rounded-xl bg-gray-100 text-[12px] font-bold text-gray-500 active:scale-95 transition-all">O'zgartirish</button>
+                    <button className="px-8 py-2 rounded-xl bg-[#4b611e] text-[12px] font-bold text-white active:scale-95 transition-all shadow-sm">Tasdiqlash</button>
                 </div>
             </div>
 
@@ -163,7 +163,7 @@ export default function MiniAppPage() {
             {/* Empty State */}
             {filteredProducts.length === 0 && !loading && (
                 <div className="py-20 text-center space-y-3">
-                    <p className="text-sm font-bold opacity-30 uppercase tracking-widest">Ничего не найдено</p>
+                    <p className="text-sm font-bold opacity-30 uppercase tracking-widest">Hech narsa topilmadi</p>
                 </div>
             )}
         </div>

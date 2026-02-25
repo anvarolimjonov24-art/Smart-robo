@@ -97,7 +97,7 @@ export default function ProfilePage() {
             </button>
 
             <div className="text-center pt-4">
-                <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Version 1.2.0 (Pro)</p>
+                <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Smart-Robo v2.0 PRO</p>
             </div>
         </div>
     );

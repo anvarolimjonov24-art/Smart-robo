@@ -56,10 +56,10 @@ function MiniAppShell({ children }: { children: React.ReactNode }) {
     }, [pathname, showBackButton, hideBackButton]);
 
     const tabs = [
-        { href: "/miniapp", icon: Home, label: "Главная" },
-        { href: "/miniapp/cart", icon: ShoppingCart, label: "Корзина" },
-        { href: "/miniapp/orders", icon: Package, label: "Заказы" },
-        { href: "/miniapp/profile", icon: User, label: "Профиль" },
+        { href: "/miniapp", icon: Home, label: "Bosh sahifa" },
+        { href: "/miniapp/cart", icon: ShoppingCart, label: "Savatcha" },
+        { href: "/miniapp/orders", icon: Package, label: "Buyurtmalar" },
+        { href: "/miniapp/profile", icon: User, label: "Profil" },
     ];
 
     return (
