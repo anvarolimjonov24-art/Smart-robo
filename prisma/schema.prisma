@@ -116,11 +116,27 @@ model Customer {
   firstName       String?
   lastName        String?
   username        String?
-  phone           String?
+  customName      String?  // Admin tomonidan qo'yilgan nom
   storeId         String
   store           Store    @relation(fields: [storeId], references: [id])
   orders          Order[]
+  messages        Message[]
   createdAt       DateTime @default(now())
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  text        String
+  sender      String   // "ADMIN" or "CUSTOMER"
+  telegramId  BigInt?
+  
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  
+  storeId     String
+  store       Store    @relation(fields: [storeId], references: [id])
+  
+  createdAt   DateTime @default(now())
 }
 
 model Order {

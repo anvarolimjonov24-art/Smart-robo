@@ -1,36 +1,37 @@
 "use client";
-import { useState, useEffect } from "react";
-import { X, Loader2, Check, Package, DollarSign, Image as ImageIcon, AlignLeft, Grid } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { X, Upload, Loader2, CheckCircle2 } from "lucide-react";
 
 interface ProductModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
-    product?: any; // If editing
+    product?: any;
     categories: any[];
     storeId: string;
 }
 
 export default function ProductModal({ isOpen, onClose, onSuccess, product, categories, storeId }: ProductModalProps) {
-    const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState(false);
-
     const [formData, setFormData] = useState({
         name: "",
         price: "",
         categoryId: "",
         description: "",
-        image: ""
+        image: "",
     });
+    const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [success, setSuccess] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (product) {
             setFormData({
                 name: product.name,
-                price: product.rawPrice?.toString() || product.price.toString().replace(/[^0-9]/g, ""),
-                categoryId: product.categoryId,
+                price: product.rawPrice?.toString() || product.price.toString().replace(/[^\d.]/g, ""),
+                categoryId: typeof product.category === 'string' ? product.category : (product.category?.id || ""),
                 description: product.description || "",
-                image: product.image || ""
+                image: product.image || "",
             });
         } else {
             setFormData({
@@ -38,12 +39,37 @@ export default function ProductModal({ isOpen, onClose, onSuccess, product, cate
                 price: "",
                 categoryId: categories[0]?.id || "",
                 description: "",
-                image: ""
+                image: "",
             });
         }
-    }, [product, isOpen, categories]);
+    }, [product, categories, isOpen]);
 
-    if (!isOpen) return null;
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        const data = new FormData();
+        data.append("file", file);
+
+        try {
+            const res = await fetch("/api/upload", {
+                method: "POST",
+                body: data
+            });
+            const result = await res.json();
+            if (result.url) {
+                setFormData(prev => ({ ...prev, image: result.url }));
+            } else {
+                alert("Rasm yuklashda xatolik yuz berdi");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Server bilan aloqa uzildi");
+        } finally {
+            setUploading(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -80,136 +106,124 @@ export default function ProductModal({ isOpen, onClose, onSuccess, product, cate
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
+    if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
-            <div className="relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-100">
-                            <Package size={24} />
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-black text-slate-800">
-                                {product ? "Mahsulotni tahrirlash" : "Yangi mahsulot"}
-                            </h3>
-                            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Do'koningizga mahsulot qo'shing</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="p-3 hover:bg-white rounded-2xl transition-all shadow-sm border border-transparent hover:border-gray-100 active:scale-90">
-                        <X size={20} className="text-gray-400" />
-                    </button>
-                </div>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
 
-                <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto max-h-[70vh] no-scrollbar">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-200">
+                {success && (
+                    <div className="absolute inset-0 bg-white/90 backdrop-blur-md z-50 flex flex-col items-center justify-center text-emerald-600 animate-in fade-in duration-300">
+                        <CheckCircle2 size={64} className="mb-4 animate-bounce" />
+                        <h3 className="text-xl font-black uppercase tracking-widest">Muvaffaqiyatli!</h3>
+                    </div>
+                )}
+
+                <div className="p-8">
+                    <div className="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+                                {product ? "Mahsulotni tahrirlash" : "Yangi mahsulot"}
+                            </h2>
+                            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Do'koningizni to'ldiring</p>
+                        </div>
+                        <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                            <X size={24} className="text-gray-400" />
+                        </button>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 px-1">
-                                <Package size={12} className="text-emerald-500" /> Mahsulot nomi
-                            </label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Mahsulot nomi</label>
                             <input
-                                type="text"
-                                name="name"
                                 required
                                 value={formData.name}
-                                onChange={handleChange}
-                                placeholder="Masalan: iPhone 15 Pro Max"
-                                className="w-full px-6 py-4 bg-gray-50/50 border border-gray-100 rounded-3xl focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 font-bold text-slate-700 transition-all"
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-700"
+                                placeholder="Masalan: Smart Watch V8"
                             />
                         </div>
 
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Narxi (UZS)</label>
+                                <input
+                                    required
+                                    type="number"
+                                    value={formData.price}
+                                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-700"
+                                    placeholder="500,000"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Kategoriya</label>
+                                <select
+                                    required
+                                    value={formData.categoryId}
+                                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-700 appearance-none"
+                                >
+                                    {categories.map((cat) => (
+                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 px-1">
-                                <DollarSign size={12} className="text-emerald-500" /> Narxi (So'mda)
-                            </label>
-                            <input
-                                type="number"
-                                name="price"
-                                required
-                                value={formData.price}
-                                onChange={handleChange}
-                                placeholder="Masalan: 12000000"
-                                className="w-full px-6 py-4 bg-gray-50/50 border border-gray-100 rounded-3xl focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 font-bold text-slate-700 transition-all"
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Rasm (URL yoki Yuklash)</label>
+                            <div className="flex gap-2">
+                                <input
+                                    required
+                                    value={formData.image}
+                                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                                    className="flex-1 px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-xs text-slate-700"
+                                    placeholder="https://images.com/image.jpg"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={uploading}
+                                    className="px-4 bg-gray-100 text-slate-600 rounded-2xl hover:bg-gray-200 transition-all flex items-center justify-center disabled:opacity-50"
+                                >
+                                    {uploading ? <Loader2 className="animate-spin" size={20} /> : <Upload size={20} />}
+                                </button>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleUpload}
+                                    accept="image/*"
+                                    className="hidden"
+                                />
+                            </div>
+                            {formData.image && (
+                                <div className="mt-2 w-20 h-20 rounded-xl overflow-hidden border border-gray-100 bg-gray-50">
+                                    <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Tavsif (Ixtiyoriy)</label>
+                            <textarea
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-700 min-h-[100px] resize-none"
+                                placeholder="Mahsulot haqida batafsil ma'lumot..."
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 px-1">
-                                <Grid size={12} className="text-emerald-500" /> Kategoriya
-                            </label>
-                            <select
-                                name="categoryId"
-                                required
-                                value={formData.categoryId}
-                                onChange={handleChange}
-                                className="w-full px-6 py-4 bg-gray-50/50 border border-gray-100 rounded-3xl focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 font-bold text-slate-700 transition-all appearance-none"
-                            >
-                                {categories.map(cat => (
-                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 px-1">
-                                <ImageIcon size={12} className="text-emerald-500" /> Rasm URL
-                            </label>
-                            <input
-                                type="text"
-                                name="image"
-                                value={formData.image}
-                                onChange={handleChange}
-                                placeholder="https://rasm-manzili..."
-                                className="w-full px-6 py-4 bg-gray-50/50 border border-gray-100 rounded-3xl focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 font-bold text-slate-700 transition-all"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 px-1">
-                            <AlignLeft size={12} className="text-emerald-500" /> Tavsif
-                        </label>
-                        <textarea
-                            name="description"
-                            rows={4}
-                            value={formData.description}
-                            onChange={handleChange}
-                            placeholder="Mahsulot haqida batafsil ma'lumot..."
-                            className="w-full px-6 py-4 bg-gray-50/50 border border-gray-100 rounded-3xl focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 font-bold text-slate-700 transition-all resize-none"
-                        />
-                    </div>
-
-                    <div className="flex gap-4 pt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 py-4 rounded-3xl font-black text-gray-400 bg-gray-50 hover:bg-gray-100 transition-all active:scale-95"
-                        >
-                            Bekor qilish
-                        </button>
                         <button
                             type="submit"
-                            disabled={loading || success}
-                            className={`flex-[2] py-4 rounded-3xl font-black transition-all flex items-center justify-center gap-2 active:scale-95 shadow-2xl ${success
-                                    ? "bg-emerald-500 text-white shadow-emerald-200"
-                                    : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-100 disabled:opacity-50"
-                                }`}
+                            disabled={loading || uploading}
+                            className="w-full py-5 bg-emerald-600 text-white rounded-3xl font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 mt-4"
                         >
-                            {loading ? (
-                                <Loader2 className="animate-spin" size={20} />
-                            ) : success ? (
-                                <><Check size={20} strokeWidth={4} /> Saqlandi!</>
-                            ) : (
-                                "Mahsulotni saqlash"
-                            )}
+                            {loading ? <Loader2 className="animate-spin" size={24} /> : (product ? "Saqlash" : "Qo'shish")}
                         </button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     );

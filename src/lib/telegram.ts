@@ -187,17 +187,59 @@ export const initBotLogic = (botInstance: Telegraf<any>) => {
     // ═════════════════════════════════════════════════════════════════
     // Noma'lum xabarga javob
     // ═════════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════
+    // Mijoz xabarlarini log qilish (Logging customer messages)
+    // ═════════════════════════════════════════════════════════════════
     botInstance.on('text', async (ctx) => {
         const miniAppUrl = `${getBaseUrl()}/miniapp`;
+        const text = ctx.message.text;
+        const telegramId = ctx.from.id;
 
-        await ctx.replyWithMarkdown(
-            `🤔 Kechirasiz, men bu xabarni tushunmadim.\n\n` +
-            `Quyidagi tugmalar orqali do'konni ishlatishingiz mumkin 👇\n` +
-            `Yoki /help buyrug'ini yozing.`,
-            Markup.inlineKeyboard([
-                [Markup.button.webApp("🛍️ Do'konga o'tish", miniAppUrl)],
-            ])
-        );
+        // Agar bu buyruq bo'lsa (masalan /start), log qilmaslik
+        if (text.startsWith('/')) return;
+
+        try {
+            const { prisma } = await import("@/lib/prisma");
+
+            // 1. Mijozni topish yoki yaratish
+            let customer = await prisma.customer.findUnique({
+                where: { telegramId }
+            });
+
+            if (!customer) {
+                // Do'konni topish (birinchi do'kon default olinadi)
+                const store = await prisma.store.findFirst();
+                if (store) {
+                    customer = await prisma.customer.create({
+                        data: {
+                            telegramId: BigInt(telegramId),
+                            firstName: ctx.from.first_name,
+                            lastName: ctx.from.last_name,
+                            username: ctx.from.username,
+                            storeId: store.id
+                        }
+                    });
+                }
+            }
+
+            // 2. Xabarni log qilish
+            if (customer) {
+                await prisma.message.create({
+                    data: {
+                        text,
+                        sender: "CUSTOMER",
+                        customerId: customer.id,
+                        storeId: customer.storeId,
+                        telegramId: BigInt(telegramId)
+                    }
+                });
+            }
+        } catch (error) {
+            console.error("[BOT] Message logging failed:", error);
+        }
+
+        // Standard javob (agar kerak bo'lsa)
+        // await ctx.replyWithMarkdown(`_Xabaringiz adminga yetkazildi..._`);
     });
 };
 
