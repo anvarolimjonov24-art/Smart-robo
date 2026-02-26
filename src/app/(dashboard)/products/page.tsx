@@ -1,7 +1,9 @@
 "use client";
 import { useState, useMemo, useEffect } from "react";
-import { Plus, Search, Edit, Trash2, Eye, Filter, Grid, Package, ArrowDownToLine, Loader2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Grid, ArrowDownToLine, Loader2 } from "lucide-react";
 import Link from "next/link";
+import ProductModal from "@/components/dashboard/ProductModal";
+import CategoryModal from "@/components/dashboard/CategoryModal";
 
 export default function ProductsPage() {
     const [searchQuery, setSearchQuery] = useState("");
@@ -10,6 +12,10 @@ export default function ProductsPage() {
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [categories, setCategories] = useState<any[]>([]);
+
+    const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<any>(null);
 
     useEffect(() => {
         fetchProducts();
@@ -41,7 +47,7 @@ export default function ProductsPage() {
     const filteredProducts = useMemo(() => {
         return products.filter((p) => {
             const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-            const matchesCategory = selectedCategory === "all" || p.category?.name === selectedCategory;
+            const matchesCategory = selectedCategory === "all" || p.category === selectedCategory || p.category?.name === selectedCategory;
             const matchesStatus = selectedStatus === "all" || (p.isActive ? "Sotuvda" : "Tugagan") === selectedStatus;
             return matchesSearch && matchesCategory && matchesStatus;
         });
@@ -62,53 +68,25 @@ export default function ProductsPage() {
         }
     };
 
-    const handleView = (name: string) => {
-        alert(`📦 "${name}" mahsulot tafsilotlari sahifasi tez orada qo'shiladi!`);
-    };
-
-    const handleEdit = (name: string) => {
-        alert(`✏️ "${name}" tahrirlash sahifasi tez orada qo'shiladi!`);
-    };
-
-    const handleAddCategory = () => {
-        alert("Kategoriya yaratish oynasi tez orada to'liq ishga tushadi. Hozirda Kategoriyalar sahifasidan foydalaning.");
-    };
-
-    const handleAddProduct = async () => {
+    const handleAddProduct = () => {
         if (categories.length === 0) {
             alert("Avval kamida 1 ta kategoriya yaratishingiz kerak!");
             return;
         }
-        const name = prompt("Yangi mahsulot nomi:");
-        if (!name) return;
-        const price = prompt("Narxi (raqamda, masalan 1500000):") || "0";
-        const catId = categories[0].id; // Tanlash imkoniyati yo'qligi sababli birinchisini olamiz
-        const storeId = categories[0].storeId;
-
-        try {
-            setLoading(true);
-            const res = await fetch("/api/dashboard/products", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name,
-                    price,
-                    categoryId: catId,
-                    storeId,
-                    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300"
-                })
-            });
-            if (res.ok) {
-                fetchProducts();
-            } else {
-                alert("Mahsulot qo'shishda xatolik");
-                setLoading(false);
-            }
-        } catch (error) {
-            console.error(error);
-            setLoading(false);
-        }
+        setEditingProduct(null);
+        setIsProductModalOpen(true);
     };
+
+    const handleEditProduct = (product: any) => {
+        setEditingProduct(product);
+        setIsProductModalOpen(true);
+    };
+
+    const handleAddCategory = () => {
+        setIsCategoryModalOpen(true);
+    };
+
+    const storeId = categories[0]?.storeId || "placeholder_store_id";
 
     return (
         <div className="space-y-6">
@@ -155,7 +133,6 @@ export default function ProductsPage() {
                     >
                         <option value="all">Holati: Barchasi</option>
                         <option value="Sotuvda">Sotuvda</option>
-                        <option value="Kam qoldi">Kam qoldi</option>
                         <option value="Tugagan">Tugagan</option>
                     </select>
                 </div>
@@ -188,7 +165,6 @@ export default function ProductsPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <div className="lg:col-span-3 space-y-6">
-                    {/* Categories Quick Nav */}
                     <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between">
                         <div className="flex items-center gap-6">
                             <div className="bg-emerald-50 p-3 rounded-2xl text-emerald-600">
@@ -196,7 +172,7 @@ export default function ProductsPage() {
                             </div>
                             <div>
                                 <h3 className="text-lg font-black text-slate-800">Kategoriyalar</h3>
-                                <p className="text-sm text-gray-400 font-medium tracking-tight">Smartfonlar, Noutbuklar va boshqalar</p>
+                                <p className="text-sm text-gray-400 font-medium tracking-tight">Maxsulot turlarini boshqaring</p>
                             </div>
                         </div>
                         <Link
@@ -207,54 +183,83 @@ export default function ProductsPage() {
                         </Link>
                     </div>
 
-                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {filteredProducts.map((product) => (
-                                <div key={product.id} className="group premium-card p-4 relative overflow-hidden">
-                                    <div className="w-full h-40 bg-gray-50 rounded-2xl mb-4 overflow-hidden relative">
-                                        <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                        <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleEdit(product.name)} className="p-2 bg-white/90 backdrop-blur-md rounded-xl text-slate-600 hover:text-emerald-500 shadow-sm active:scale-90 transition-all">
-                                                <Edit size={14} />
-                                            </button>
-                                            <button onClick={() => handleDelete(product.id, product.name)} className="p-2 bg-white/90 backdrop-blur-md rounded-xl text-slate-600 hover:text-red-500 shadow-sm active:scale-90 transition-all">
-                                                <Trash2 size={14} />
-                                            </button>
+                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm min-h-[400px]">
+                        {loading ? (
+                            <div className="flex items-center justify-center h-full">
+                                <Loader2 className="animate-spin text-emerald-600" size={32} />
+                            </div>
+                        ) : filteredProducts.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {filteredProducts.map((product) => (
+                                    <div key={product.id} className="group bg-white p-4 border border-gray-100 rounded-[2rem] hover:shadow-2xl hover:shadow-emerald-100/50 transition-all relative overflow-hidden">
+                                        <div className="w-full h-44 bg-gray-50 rounded-[1.5rem] mb-4 overflow-hidden relative">
+                                            <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                            <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => handleEditProduct(product)} className="p-2.5 bg-white/90 backdrop-blur-md rounded-xl text-slate-600 hover:text-emerald-500 shadow-sm active:scale-90 transition-all">
+                                                    <Edit size={16} />
+                                                </button>
+                                                <button onClick={() => handleDelete(product.id, product.name)} className="p-2.5 bg-white/90 backdrop-blur-md rounded-xl text-slate-600 hover:text-red-500 shadow-sm active:scale-90 transition-all">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <h4 className="font-black text-slate-800 mb-1 group-hover:text-emerald-600 transition-colors uppercase tracking-tight text-sm px-1">{product.name}</h4>
+                                        <div className="flex justify-between items-center text-xs font-bold px-1 mt-2">
+                                            <span className="text-emerald-600 font-black">{product.price}</span>
+                                            <span className="bg-gray-50 px-3 py-1 rounded-full text-[10px] text-gray-400 uppercase tracking-widest">{typeof product.category === 'string' ? product.category : product.category?.name || ''}</span>
                                         </div>
                                     </div>
-                                    <h4 className="font-bold text-slate-800 mb-1 group-hover:text-emerald-600 transition-colors uppercase tracking-tight text-sm">{product.name}</h4>
-                                    <div className="flex justify-between items-center text-xs font-medium">
-                                        <span className="text-emerald-600 font-black">{product.price}</span>
-                                        <span className="text-gray-300 uppercase tracking-widest">{product.category?.name || ''}</span>
-                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-full py-20 text-center">
+                                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-200 mb-4">
+                                    <Plus size={40} />
                                 </div>
-                            ))}
-                        </div>
+                                <h3 className="font-black text-slate-400 uppercase tracking-widest">Mahsulot topilmadi</h3>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 <div className="space-y-6">
-                    <div className="bg-slate-900 p-6 rounded-[2rem] text-white relative overflow-hidden shadow-xl shadow-slate-200">
+                    <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white relative overflow-hidden shadow-2xl shadow-slate-200">
                         <div className="relative z-10">
-                            <h3 className="text-lg font-black mb-1 text-emerald-400">Statistika</h3>
-                            <p className="text-[10px] opacity-40 uppercase font-black tracking-widest mb-6">Mahsulotlar bo'yicha</p>
-                            <div className="space-y-4">
+                            <h3 className="text-xl font-black mb-1 text-emerald-400 uppercase tracking-tight">Statistika</h3>
+                            <p className="text-[10px] opacity-40 uppercase font-black tracking-[0.2em] mb-8">Ma'lumotlar tahlili</p>
+                            <div className="space-y-6">
                                 <div className="flex justify-between items-end">
-                                    <span className="text-xs font-medium opacity-60">Jami</span>
-                                    <span className="text-xl font-black">{products.length} ta</span>
+                                    <span className="text-xs font-bold opacity-60">Jami mahsulotlar</span>
+                                    <span className="text-3xl font-black">{products.length} ta</span>
                                 </div>
-                                <div className="pt-4 border-t border-white/5">
-                                    <button onClick={() => alert("Eksport qilinmoqda...")} className="flex items-center justify-between w-full text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:text-emerald-300">
+                                <div className="pt-6 border-t border-white/5">
+                                    <button onClick={() => alert("Eksport funksiyasi tez orada...")} className="flex items-center justify-between w-full p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition-all text-[10px] font-black uppercase tracking-widest text-emerald-400">
                                         <span>Excel Eksport</span>
-                                        <ArrowDownToLine size={14} />
+                                        <ArrowDownToLine size={16} />
                                     </button>
                                 </div>
                             </div>
                         </div>
-                        <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl"></div>
+                        <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl"></div>
                     </div>
                 </div>
             </div>
+
+            <ProductModal
+                isOpen={isProductModalOpen}
+                onClose={() => setIsProductModalOpen(false)}
+                onSuccess={() => { fetchProducts(); fetchCategories(); }}
+                product={editingProduct}
+                categories={categories}
+                storeId={storeId}
+            />
+
+            <CategoryModal
+                isOpen={isCategoryModalOpen}
+                onClose={() => setIsCategoryModalOpen(false)}
+                onSuccess={fetchCategories}
+                storeId={storeId}
+            />
         </div>
     );
 }

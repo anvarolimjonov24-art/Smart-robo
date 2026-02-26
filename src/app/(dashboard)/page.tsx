@@ -14,11 +14,14 @@ import {
     Settings,
     Grid,
     Truck,
-    DollarSign
+    DollarSign,
+    Loader2
 } from "lucide-react";
 import StatsCard from "@/components/dashboard/StatsCard";
 import OrdersTable from "@/components/dashboard/OrdersTable";
 import RevenueChart from "@/components/dashboard/RevenueChart";
+import ProductModal from "@/components/dashboard/ProductModal";
+import CategoryModal from "@/components/dashboard/CategoryModal";
 
 export default function DashboardPage() {
     const [showTrial, setShowTrial] = useState(true);
@@ -26,25 +29,44 @@ export default function DashboardPage() {
     const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
     const [chartData, setChartData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [categories, setCategories] = useState<any[]>([]);
+
+    const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
     useEffect(() => {
         setLoading(true);
-        fetch("/api/dashboard/stats")
-            .then(res => res.json())
-            .then(data => {
-                if (!data.error) {
-                    setStats(data.stats);
-                    setChartData(data.chartData);
-                }
-            })
-            .finally(() => setLoading(false));
+        Promise.all([
+            fetch("/api/dashboard/stats").then(res => res.json()),
+            fetch("/api/dashboard/categories").then(res => res.json())
+        ]).then(([statsData, categoriesData]) => {
+            if (!statsData.error) {
+                setStats(statsData.stats);
+                setChartData(statsData.chartData);
+            }
+            if (Array.isArray(categoriesData)) {
+                setCategories(categoriesData);
+            }
+        }).finally(() => setLoading(false));
     }, []);
+
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch("/api/dashboard/categories");
+            const data = await res.json();
+            if (Array.isArray(data)) setCategories(data);
+        } catch (error) {
+            console.error("Error fetching categories:", error);
+        }
+    };
 
     const toggleStep = (step: string) => {
         setCompletedSteps((prev) =>
             prev.includes(step) ? prev.filter((s) => s !== step) : [...prev, step]
         );
     };
+
+    const storeId = categories[0]?.storeId || "placeholder_store_id";
 
     return (
         <div className="space-y-6">
@@ -126,7 +148,11 @@ export default function DashboardPage() {
                             title="Kategoriya qo'shish"
                             desc="Har bir kategoriya uchun rasm yuklang va nom bering."
                             completed={completedSteps.includes("category")}
-                            onClick={() => toggleStep("category")}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                toggleStep("category");
+                                setIsCategoryModalOpen(true);
+                            }}
                             href="/categories"
                         />
                         <ChecklistItem
@@ -134,7 +160,11 @@ export default function DashboardPage() {
                             title="Mahsulot qo'shish"
                             desc="Nomini kiriting, rasmlarni yuklang, tavsif, narx va xususiyatlarni qo'shing."
                             completed={completedSteps.includes("product")}
-                            onClick={() => toggleStep("product")}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                toggleStep("product");
+                                setIsProductModalOpen(true);
+                            }}
                             href="/products"
                         />
                         <ChecklistItem
@@ -210,12 +240,27 @@ export default function DashboardPage() {
             </div>
 
             <OrdersTable />
+
+            <ProductModal
+                isOpen={isProductModalOpen}
+                onClose={() => setIsProductModalOpen(false)}
+                onSuccess={() => { }} // Nothing special on home for now
+                categories={categories}
+                storeId={storeId}
+            />
+
+            <CategoryModal
+                isOpen={isCategoryModalOpen}
+                onClose={() => setIsCategoryModalOpen(false)}
+                onSuccess={fetchCategories}
+                storeId={storeId}
+            />
         </div>
     );
 }
 
 function ChecklistItem({ icon: Icon, title, desc, completed = false, onClick, href }: {
-    icon: any; title: string; desc: string; completed?: boolean; onClick: () => void; href: string;
+    icon: any; title: string; desc: string; completed?: boolean; onClick: (e: any) => void; href: string;
 }) {
     return (
         <Link
