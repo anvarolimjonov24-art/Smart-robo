@@ -9,51 +9,63 @@ import {
     ResponsiveContainer
 } from 'recharts';
 
-const data = [
-    { name: 'Mon', revenue: 4000 },
-    { name: 'Tue', revenue: 3000 },
-    { name: 'Wed', revenue: 2000 },
-    { name: 'Thu', revenue: 2780 },
-    { name: 'Fri', revenue: 1890 },
-    { name: 'Sat', revenue: 2390 },
-    { name: 'Sun', revenue: 3490 },
-];
+interface ChartProps {
+    data: any[];
+    dataKey: string;
+    title: string;
+    color?: string;
+    formatter?: (value: any) => string;
+}
 
-export default function RevenueChart() {
+export default function RevenueChart({
+    data,
+    dataKey,
+    title,
+    color = "#10b981",
+    formatter = (val) => val.toLocaleString()
+}: ChartProps) {
     return (
-        <div className="bg-white p-6 rounded-xl border border-gray-200">
-            <h3 className="text-lg font-bold text-gray-900 mb-6">Revenue Overview</h3>
-            <div className="h-[300px] w-full">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
+            <h3 className="text-sm font-black text-slate-800 mb-6 uppercase tracking-wider">{title}</h3>
+            <div className="flex-1 min-h-[220px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={data}>
                         <defs>
-                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
-                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                            <linearGradient id={`color${dataKey}`} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={color} stopOpacity={0.1} />
+                                <stop offset="95%" stopColor={color} stopOpacity={0} />
                             </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         <XAxis
                             dataKey="name"
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fontSize: 12, fill: '#9ca3af' }}
+                            tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
+                            dy={10}
                         />
                         <YAxis
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fontSize: 12, fill: '#9ca3af' }}
-                            tickFormatter={(value) => `${value / 1000}k`}
+                            tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
+                            tickFormatter={formatter}
                         />
                         <Tooltip
-                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                            contentStyle={{
+                                borderRadius: '16px',
+                                border: 'none',
+                                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                                fontSize: '12px',
+                                fontWeight: 'bold'
+                            }}
                         />
                         <Area
                             type="monotone"
-                            dataKey="revenue"
-                            stroke="#3b82f6"
+                            dataKey={dataKey}
+                            stroke={color}
+                            strokeWidth={3}
                             fillOpacity={1}
-                            fill="url(#colorRevenue)"
+                            fill={`url(#color${dataKey})`}
                         />
                     </AreaChart>
                 </ResponsiveContainer>

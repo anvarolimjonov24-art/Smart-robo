@@ -18,11 +18,13 @@ import {
 } from "lucide-react";
 import StatsCard from "@/components/dashboard/StatsCard";
 import OrdersTable from "@/components/dashboard/OrdersTable";
+import RevenueChart from "@/components/dashboard/RevenueChart";
 
 export default function DashboardPage() {
     const [showTrial, setShowTrial] = useState(true);
     const [completedSteps, setCompletedSteps] = useState<string[]>(["delivery"]);
     const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
+    const [chartData, setChartData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -30,7 +32,10 @@ export default function DashboardPage() {
         fetch("/api/dashboard/stats")
             .then(res => res.json())
             .then(data => {
-                if (!data.error) setStats(data);
+                if (!data.error) {
+                    setStats(data.stats);
+                    setChartData(data.chartData);
+                }
             })
             .finally(() => setLoading(false));
     }, []);
@@ -182,10 +187,26 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* Charts Placeholder */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <StatsBox title="Daromadlar statistikasi" />
-                <StatsBox title="Buyurtmalar statistikasi" />
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="h-[380px]">
+                    <RevenueChart
+                        title="Daromadlar dinamikasi"
+                        data={chartData}
+                        dataKey="revenue"
+                        color="#10b981"
+                        formatter={(val) => `${(val / 1000).toFixed(0)}k`}
+                    />
+                </div>
+                <div className="h-[380px]">
+                    <RevenueChart
+                        title="Buyurtmalar dinamikasi"
+                        data={chartData}
+                        dataKey="orders"
+                        color="#6366f1"
+                        formatter={(val) => val.toString()}
+                    />
+                </div>
             </div>
 
             <OrdersTable />
@@ -224,18 +245,3 @@ function ChecklistItem({ icon: Icon, title, desc, completed = false, onClick, hr
     );
 }
 
-function StatsBox({ title }: { title: string }) {
-    return (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-64 flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-slate-700">{title}</h3>
-                <button className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[10px] font-bold text-gray-400 hover:bg-gray-100 transition-colors uppercase tracking-wider">
-                    Har hafta <ChevronRight size={10} className="rotate-90" />
-                </button>
-            </div>
-            <div className="flex-1 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center text-gray-300 text-xs font-bold uppercase tracking-widest italic">
-                Statistika mavjud emas
-            </div>
-        </div>
-    );
-}

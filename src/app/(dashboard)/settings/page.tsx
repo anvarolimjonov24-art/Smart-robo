@@ -1,25 +1,59 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Save, Bot, CreditCard, Clock, Store, Loader2, Check, AlertCircle } from "lucide-react";
 
 export default function SettingsPage() {
+    const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const [botChecking, setBotChecking] = useState(false);
     const [botStatus, setBotStatus] = useState<"idle" | "success" | "error">("idle");
-    const [storeName, setStoreName] = useState("Smart-Robo Shop");
-    const [phone, setPhone] = useState("+998 90 123 45 67");
+
+    const [storeName, setStoreName] = useState("");
+    const [phone, setPhone] = useState("");
     const [description, setDescription] = useState("");
     const [botToken, setBotToken] = useState("");
 
-    const handleSave = () => {
+    // Yuklash
+    useEffect(() => {
+        fetch("/api/dashboard/settings")
+            .then(res => res.json())
+            .then(data => {
+                if (!data.error) {
+                    setStoreName(data.name || "");
+                    setPhone(data.settings?.phone || "+998 90 123 45 67");
+                    setDescription(data.description || "");
+                    setBotToken(data.botToken || "");
+                }
+            })
+            .finally(() => setLoading(false));
+    }, []);
+
+    const handleSave = async () => {
         setSaving(true);
         setSaved(false);
-        setTimeout(() => {
+
+        try {
+            const response = await fetch("/api/dashboard/settings", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: storeName,
+                    description: description,
+                    botToken: botToken,
+                    settings: { phone }
+                })
+            });
+
+            if (response.ok) {
+                setSaved(true);
+                setTimeout(() => setSaved(false), 3000);
+            }
+        } catch (error) {
+            console.error("Save error:", error);
+        } finally {
             setSaving(false);
-            setSaved(true);
-            setTimeout(() => setSaved(false), 3000);
-        }, 1500);
+        }
     };
 
     const handleCheckBot = () => {
@@ -29,6 +63,8 @@ export default function SettingsPage() {
         }
         setBotChecking(true);
         setBotStatus("idle");
+
+        // Simulyatsiya (Telegram API ga ulanishni qo'shish mumkin)
         setTimeout(() => {
             setBotChecking(false);
             if (botToken.includes(":")) {
@@ -38,6 +74,14 @@ export default function SettingsPage() {
             }
         }, 2000);
     };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="animate-spin text-emerald-600" size={40} />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -138,60 +182,6 @@ export default function SettingsPage() {
                                         <AlertCircle size={14} /> Token noto'g'ri!
                                     </span>
                                 )}
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Payments */}
-                    <section className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
-                                <CreditCard size={20} />
-                            </div>
-                            <h2 className="text-lg font-black text-slate-800">To'lov tizimlari</h2>
-                        </div>
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between p-4 border border-gray-50 rounded-2xl hover:border-gray-100 transition-colors">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl">C</div>
-                                    <div>
-                                        <p className="font-black text-slate-800">Click Evolution</p>
-                                        <p className="text-xs text-gray-300 font-medium">Merchant ID: 12345</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        setSaving(true);
-                                        setTimeout(() => {
-                                            setSaving(false);
-                                            alert("✅ Click Evolution sozlamalari yangilandi!");
-                                        }, 1000);
-                                    }}
-                                    className="text-emerald-600 font-black text-sm hover:text-emerald-700 transition-colors"
-                                >
-                                    Sozlash
-                                </button>
-                            </div>
-                            <div className="flex items-center justify-between p-4 border border-gray-50 rounded-2xl hover:border-gray-100 transition-colors">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-cyan-500 rounded-xl flex items-center justify-center text-white font-black text-xl">P</div>
-                                    <div>
-                                        <p className="font-black text-slate-800">Payme Integration</p>
-                                        <p className="text-xs text-gray-300 font-medium font-bold">Ulanmagan</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        setSaving(true);
-                                        setTimeout(() => {
-                                            setSaving(false);
-                                            alert("🔌 Payme xizmati bilan aloqa o'rnatilmoqda...");
-                                        }, 800);
-                                    }}
-                                    className="text-emerald-600 font-black text-sm hover:text-emerald-700 transition-colors"
-                                >
-                                    Ulash
-                                </button>
                             </div>
                         </div>
                     </section>
