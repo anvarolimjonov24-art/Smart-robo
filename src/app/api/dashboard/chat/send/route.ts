@@ -27,7 +27,7 @@ export async function POST(req: Request) {
         }
 
         // 2. Bazaga saqlash
-        const message = await prisma.message.create({
+        const message = await (prisma as any).message.create({
             data: {
                 text,
                 sender: "ADMIN",

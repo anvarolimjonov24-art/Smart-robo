@@ -10,13 +10,13 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "CustomerID topilmadi" }, { status: 400 });
         }
 
-        const messages = await prisma.message.findMany({
+        const messages = await (prisma as any).message.findMany({
             where: { customerId },
             orderBy: { createdAt: "asc" }
         });
 
         // Convert BigInt to string for JSON serialization
-        const formattedMessages = messages.map(m => ({
+        const formattedMessages = messages.map((m: any) => ({
             ...m,
             telegramId: m.telegramId?.toString()
         }));

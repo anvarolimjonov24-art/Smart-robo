@@ -202,15 +202,15 @@ export const initBotLogic = (botInstance: Telegraf<any>) => {
             const { prisma } = await import("@/lib/prisma");
 
             // 1. Mijozni topish yoki yaratish
-            let customer = await prisma.customer.findUnique({
+            let customer = await (prisma as any).customer.findUnique({
                 where: { telegramId }
             });
 
             if (!customer) {
                 // Do'konni topish (birinchi do'kon default olinadi)
-                const store = await prisma.store.findFirst();
+                const store = await (prisma as any).store.findFirst();
                 if (store) {
-                    customer = await prisma.customer.create({
+                    customer = await (prisma as any).customer.create({
                         data: {
                             telegramId: BigInt(telegramId),
                             firstName: ctx.from.first_name,
@@ -224,7 +224,7 @@ export const initBotLogic = (botInstance: Telegraf<any>) => {
 
             // 2. Xabarni log qilish
             if (customer) {
-                await prisma.message.create({
+                await (prisma as any).message.create({
                     data: {
                         text,
                         sender: "CUSTOMER",
