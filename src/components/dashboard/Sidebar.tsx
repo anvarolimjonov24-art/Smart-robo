@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     LayoutDashboard,
     Package,
@@ -18,8 +18,9 @@ import {
     UserCircle,
     Store,
     ChevronDown,
-    Plus,
-    Zap
+    Zap,
+    ShieldCheck,
+    Check
 } from "lucide-react";
 
 interface NavItem {
@@ -46,9 +47,29 @@ const navigation: NavItem[] = [
     { name: "Sozlamalar", href: "/settings", icon: Settings },
 ];
 
+const availableStores = ["Shoxparfum", "Sinamed", "Teddy Silicone", "Robo Gadgets"];
+
 export default function Sidebar() {
     const pathname = usePathname();
     const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+    const [activeStore, setActiveStore] = useState("Shoxparfum");
+    const [showStoreDropdown, setShowStoreDropdown] = useState(false);
+
+    useEffect(() => {
+        const savedStore = localStorage.getItem("activeStore");
+        if (savedStore) {
+            setActiveStore(savedStore);
+        }
+    }, []);
+
+    const handleSelectStore = (storeName: string) => {
+        setActiveStore(storeName);
+        localStorage.setItem("activeStore", storeName);
+        setShowStoreDropdown(false);
+        if (pathname === "/super-admin") {
+            window.location.href = "/";
+        }
+    };
 
     const toggleMenu = (name: string) => {
         setExpandedMenus((prev) =>
@@ -72,19 +93,43 @@ export default function Sidebar() {
                 </div>
             </div>
 
-            <div className="px-4 mb-6">
-                <div className="flex items-center justify-between bg-slate-50/50 p-3 rounded-2xl border border-slate-100/50 group cursor-pointer hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-white rounded-lg border border-slate-100 flex items-center justify-center shadow-sm">
-                            <Store size={16} className="text-slate-400" />
+            {/* Context Switcher (Do'kon almashtirgich) */}
+            <div className="px-4 mb-6 relative">
+                <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1.5 px-1">
+                    Context Switcher
+                </div>
+                <button
+                    onClick={() => setShowStoreDropdown(!showStoreDropdown)}
+                    className="w-full flex items-center justify-between bg-slate-50/80 p-3 rounded-2xl border border-slate-100/80 group cursor-pointer hover:bg-slate-100/80 transition-all text-left"
+                >
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="w-8 h-8 bg-white rounded-lg border border-slate-200 flex items-center justify-center shadow-sm shrink-0">
+                            <Store size={16} className="text-emerald-600" />
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest leading-none mb-1">Do'kon</span>
-                            <span className="text-sm font-bold text-slate-700 leading-none">Sinamed</span>
+                        <div className="flex flex-col truncate">
+                            <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest leading-none mb-1">Joriy Do'kon</span>
+                            <span className="text-sm font-bold text-slate-800 leading-none truncate">{activeStore}</span>
                         </div>
                     </div>
-                    <ChevronDown size={14} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
-                </div>
+                    <ChevronDown size={14} className={`text-slate-400 group-hover:text-slate-600 transition-transform ${showStoreDropdown ? "rotate-180" : ""}`} />
+                </button>
+
+                {/* Dropdown Menu */}
+                {showStoreDropdown && (
+                    <div className="absolute left-4 right-4 top-full mt-2 bg-white rounded-2xl border border-gray-100 shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <p className="text-[10px] font-black text-gray-400 uppercase px-3 py-1.5">Do'koningizni tanlang</p>
+                        {availableStores.map((st) => (
+                            <button
+                                key={st}
+                                onClick={() => handleSelectStore(st)}
+                                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-colors ${activeStore === st ? "bg-emerald-50 text-emerald-600" : "text-slate-600 hover:bg-slate-50"}`}
+                            >
+                                <span>{st}</span>
+                                {activeStore === st && <Check size={14} strokeWidth={3} />}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
             <nav className="flex-1 overflow-y-auto px-3 space-y-1 no-scrollbar">
@@ -126,51 +171,32 @@ export default function Sidebar() {
                                     {active && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full shadow-lg shadow-emerald-400"></div>}
                                 </Link>
                             )}
-                            {item.children && isExpanded && (
-                                <div className="ml-9 mt-1 space-y-1 border-l-2 border-slate-50">
-                                    <Link
-                                        href={item.href}
-                                        className={`block px-4 py-2 rounded-lg text-xs font-bold transition-colors ${active ? "text-emerald-600" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/50"
-                                            }`}
-                                    >
-                                        Barchasini ko'rish
-                                    </Link>
-                                    <Link
-                                        href={`${item.href}/new`}
-                                        className="block px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-600 hover:bg-slate-50/50 transition-colors"
-                                    >
-                                        + Yangi qo'shish
-                                    </Link>
-                                </div>
-                            )}
                         </div>
                     );
                 })}
             </nav>
 
-            <div className="p-4 mt-auto">
+            {/* SUPER ADMIN Button & Pro Plan at Bottom */}
+            <div className="p-4 space-y-3 mt-auto border-t border-slate-50">
                 <Link
-                    href="/subscription"
-                    className="group relative w-full bg-slate-900 overflow-hidden text-white p-4 rounded-2xl text-sm font-black flex flex-col gap-2 hover:bg-slate-800 transition-all duration-300 shadow-xl shadow-slate-200"
+                    href="/super-admin"
+                    className={`w-full flex items-center gap-3 p-3.5 rounded-2xl font-black text-xs transition-all shadow-md ${pathname === "/super-admin"
+                        ? "bg-purple-700 text-white shadow-purple-200 ring-2 ring-purple-400"
+                        : "bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200/60"
+                        }`}
                 >
-                    <div className="flex items-center justify-between relative z-10">
-                        <span className="flex items-center gap-2">
-                            <Zap size={14} className="text-amber-400 fill-amber-400" />
-                            PRO PLAN
-                        </span>
-                        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400"></div>
+                    <div className="p-2 bg-purple-600 text-white rounded-xl shadow-sm">
+                        <ShieldCheck size={16} />
                     </div>
-                    <div className="flex items-center justify-between relative z-10">
-                        <span className="text-[10px] font-medium opacity-60">Status: Aktiv</span>
-                        <span className="text-[10px] font-medium opacity-60 italic">Sinov muddati: 7 kun</span>
+                    <div className="flex flex-col text-left">
+                        <span className="uppercase tracking-wider font-black text-[11px]">Super Admin</span>
+                        <span className="text-[9px] font-medium opacity-80">Barcha tizimlarni boshqaruvchi</span>
                     </div>
-                    {/* Abstract Background Element */}
-                    <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-emerald-500/20 rounded-full blur-2xl group-hover:bg-emerald-500/40 transition-colors"></div>
                 </Link>
-            </div>
 
-            <div className="p-4 text-[10px] text-slate-300 font-bold text-center border-t border-slate-50 uppercase tracking-widest">
-                &copy; 2024 Smart-Robo v2.0 PRO
+                <div className="text-[10px] text-slate-300 font-bold text-center uppercase tracking-widest pt-1">
+                    &copy; 2024 Smart-Robo v2.0 PRO
+                </div>
             </div>
         </aside>
     );
