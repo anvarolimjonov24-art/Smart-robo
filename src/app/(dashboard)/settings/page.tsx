@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Save, Bot, CreditCard, Clock, Store, Loader2, Check, AlertCircle } from "lucide-react";
+import { Save, Bot, CreditCard, Clock, Store, Loader2, Check, AlertCircle, FileText } from "lucide-react";
 
 export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
@@ -183,6 +183,41 @@ export default function SettingsPage() {
                                     </span>
                                 )}
                             </div>
+                        </div>
+                    </section>
+
+                    {/* Schot-Faktura (Nakladnaya) Feature Settings */}
+                    <section className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2 bg-purple-50 text-purple-600 rounded-xl">
+                                <FileText size={20} />
+                            </div>
+                            <h2 className="text-lg font-black text-slate-800">Schot-Faktura (Sotuv Nakladnayasi) Sozlamalari</h2>
+                        </div>
+                        <div className="space-y-4">
+                            <label className="flex items-center gap-3 p-3 bg-purple-50/50 rounded-xl border border-purple-100 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    defaultChecked={true}
+                                    className="w-5 h-5 accent-purple-600 rounded cursor-pointer"
+                                />
+                                <div>
+                                    <p className="text-sm font-black text-slate-800">Schot-faktura (Nakladnaya) generatorini yoqish</p>
+                                    <p className="text-xs text-gray-500 font-medium">Buyurtmalar bo'limida har bir buyurtma uchun printable A4 schot-faktura tugmasi ko'rinadi</p>
+                                </div>
+                            </label>
+
+                            <label className="flex items-center gap-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    defaultChecked={true}
+                                    className="w-5 h-5 accent-blue-600 rounded cursor-pointer"
+                                />
+                                <div>
+                                    <p className="text-sm font-black text-slate-800">Telegram Bot orqali mijozga avto-faktura yuborish</p>
+                                    <p className="text-xs text-gray-500 font-medium">Buyurtma tasdiqlangach, Telegram bot mijozga rasmli fakturani avtomatik yuboradi</p>
+                                </div>
+                            </label>
                         </div>
                     </section>
                 </div>
