@@ -47,28 +47,25 @@ const navigation: NavItem[] = [
     { name: "Sozlamalar", href: "/settings", icon: Settings },
 ];
 
-const availableStores = ["Shoxparfum", "Sinamed", "Teddy Silicone", "Robo Gadgets"];
+const availableContexts = ["Platform Management", "Shoxparfum", "Sinamed", "Teddy Silicone"];
 
 export default function Sidebar() {
     const pathname = usePathname();
     const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
-    const [activeStore, setActiveStore] = useState("Shoxparfum");
-    const [showStoreDropdown, setShowStoreDropdown] = useState(false);
+    const [activeContext, setActiveContext] = useState("Platform Management");
+    const [showDropdown, setShowDropdown] = useState(false);
 
     useEffect(() => {
-        const savedStore = localStorage.getItem("activeStore");
-        if (savedStore) {
-            setActiveStore(savedStore);
+        const savedCtx = localStorage.getItem("activeContext");
+        if (savedCtx) {
+            setActiveContext(savedCtx);
         }
     }, []);
 
-    const handleSelectStore = (storeName: string) => {
-        setActiveStore(storeName);
-        localStorage.setItem("activeStore", storeName);
-        setShowStoreDropdown(false);
-        if (pathname === "/super-admin") {
-            window.location.href = "/";
-        }
+    const handleSelectContext = (contextName: string) => {
+        setActiveContext(contextName);
+        localStorage.setItem("activeContext", contextName);
+        setShowDropdown(false);
     };
 
     const toggleMenu = (name: string) => {
@@ -93,39 +90,39 @@ export default function Sidebar() {
                 </div>
             </div>
 
-            {/* Context Switcher (Do'kon almashtirgich) */}
+            {/* Context Switcher (Platform Management / Store Dropdown) */}
             <div className="px-4 mb-6 relative">
                 <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1.5 px-1">
                     Context Switcher
                 </div>
                 <button
-                    onClick={() => setShowStoreDropdown(!showStoreDropdown)}
+                    onClick={() => setShowDropdown(!showDropdown)}
                     className="w-full flex items-center justify-between bg-slate-50/80 p-3 rounded-2xl border border-slate-100/80 group cursor-pointer hover:bg-slate-100/80 transition-all text-left"
                 >
                     <div className="flex items-center gap-3 overflow-hidden">
                         <div className="w-8 h-8 bg-white rounded-lg border border-slate-200 flex items-center justify-center shadow-sm shrink-0">
-                            <Store size={16} className="text-emerald-600" />
+                            <Store size={16} className="text-purple-600" />
                         </div>
                         <div className="flex flex-col truncate">
-                            <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest leading-none mb-1">Joriy Do'kon</span>
-                            <span className="text-sm font-bold text-slate-800 leading-none truncate">{activeStore}</span>
+                            <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest leading-none mb-1">Rejim</span>
+                            <span className="text-sm font-bold text-slate-800 leading-none truncate">{activeContext}</span>
                         </div>
                     </div>
-                    <ChevronDown size={14} className={`text-slate-400 group-hover:text-slate-600 transition-transform ${showStoreDropdown ? "rotate-180" : ""}`} />
+                    <ChevronDown size={14} className={`text-slate-400 group-hover:text-slate-600 transition-transform ${showDropdown ? "rotate-180" : ""}`} />
                 </button>
 
-                {/* Dropdown Menu */}
-                {showStoreDropdown && (
+                {/* Dropdown Options */}
+                {showDropdown && (
                     <div className="absolute left-4 right-4 top-full mt-2 bg-white rounded-2xl border border-gray-100 shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <p className="text-[10px] font-black text-gray-400 uppercase px-3 py-1.5">Do'koningizni tanlang</p>
-                        {availableStores.map((st) => (
+                        <p className="text-[10px] font-black text-gray-400 uppercase px-3 py-1.5">Kontekstni tanlang</p>
+                        {availableContexts.map((ctx) => (
                             <button
-                                key={st}
-                                onClick={() => handleSelectStore(st)}
-                                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-colors ${activeStore === st ? "bg-emerald-50 text-emerald-600" : "text-slate-600 hover:bg-slate-50"}`}
+                                key={ctx}
+                                onClick={() => handleSelectContext(ctx)}
+                                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-colors ${activeContext === ctx ? "bg-purple-50 text-purple-700" : "text-slate-600 hover:bg-slate-50"}`}
                             >
-                                <span>{st}</span>
-                                {activeStore === st && <Check size={14} strokeWidth={3} />}
+                                <span>{ctx}</span>
+                                {activeContext === ctx && <Check size={14} strokeWidth={3} />}
                             </button>
                         ))}
                     </div>
@@ -176,10 +173,11 @@ export default function Sidebar() {
                 })}
             </nav>
 
-            {/* SUPER ADMIN Button & Pro Plan at Bottom */}
+            {/* SUPER ADMIN Button */}
             <div className="p-4 space-y-3 mt-auto border-t border-slate-50">
                 <Link
                     href="/super-admin"
+                    onClick={() => handleSelectContext("Platform Management")}
                     className={`w-full flex items-center gap-3 p-3.5 rounded-2xl font-black text-xs transition-all shadow-md ${pathname === "/super-admin"
                         ? "bg-purple-700 text-white shadow-purple-200 ring-2 ring-purple-400"
                         : "bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200/60"
@@ -189,7 +187,7 @@ export default function Sidebar() {
                         <ShieldCheck size={16} />
                     </div>
                     <div className="flex flex-col text-left">
-                        <span className="uppercase tracking-wider font-black text-[11px]">Super Admin</span>
+                        <span className="uppercase tracking-wider font-black text-[11px]">SUPER ADMIN</span>
                         <span className="text-[9px] font-medium opacity-80">Barcha tizimlarni boshqaruvchi</span>
                     </div>
                 </Link>
