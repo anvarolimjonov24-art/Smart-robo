@@ -1,9 +1,9 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { MessageSquare, Search, Send, Loader2, Phone, User, ChevronLeft } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 
-export default function ChatPage() {
+function ChatContent() {
     const searchParams = useSearchParams();
     const initialCustomerId = searchParams.get('id');
 
@@ -236,5 +236,13 @@ export default function ChatPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function ChatPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center p-12"><Loader2 className="animate-spin text-emerald-500" /></div>}>
+            <ChatContent />
+        </Suspense>
     );
 }
