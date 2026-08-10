@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
     LayoutDashboard,
@@ -51,21 +51,35 @@ const availableContexts = ["Platform Management", "Shoxparfum", "Sinamed", "Tedd
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const router = useRouter();
     const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
     const [activeContext, setActiveContext] = useState("Platform Management");
     const [showDropdown, setShowDropdown] = useState(false);
 
     useEffect(() => {
-        const savedCtx = localStorage.getItem("activeContext");
-        if (savedCtx) {
-            setActiveContext(savedCtx);
+        if (pathname === "/admin" || pathname === "/super-admin") {
+            setActiveContext("Platform Management");
+            localStorage.setItem("activeContext", "Platform Management");
+        } else {
+            const savedCtx = localStorage.getItem("activeContext");
+            if (savedCtx && savedCtx !== "Platform Management") {
+                setActiveContext(savedCtx);
+            } else {
+                setActiveContext("Shoxparfum");
+            }
         }
-    }, []);
+    }, [pathname]);
 
     const handleSelectContext = (contextName: string) => {
         setActiveContext(contextName);
         localStorage.setItem("activeContext", contextName);
         setShowDropdown(false);
+
+        if (contextName === "Platform Management") {
+            router.push("/admin");
+        } else {
+            router.push("/");
+        }
     };
 
     const toggleMenu = (name: string) => {
@@ -105,7 +119,9 @@ export default function Sidebar() {
                         </div>
                         <div className="flex flex-col truncate">
                             <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest leading-none mb-1">Rejim</span>
-                            <span className="text-sm font-bold text-slate-800 leading-none truncate">{activeContext}</span>
+                            <span className="text-sm font-bold text-slate-800 leading-none truncate">
+                                {pathname === "/admin" || pathname === "/super-admin" ? "Platform Management" : activeContext}
+                            </span>
                         </div>
                     </div>
                     <ChevronDown size={14} className={`text-slate-400 group-hover:text-slate-600 transition-transform ${showDropdown ? "rotate-180" : ""}`} />
@@ -119,10 +135,10 @@ export default function Sidebar() {
                             <button
                                 key={ctx}
                                 onClick={() => handleSelectContext(ctx)}
-                                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-colors ${activeContext === ctx ? "bg-purple-50 text-purple-700" : "text-slate-600 hover:bg-slate-50"}`}
+                                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-colors ${(pathname === "/admin" && ctx === "Platform Management") || activeContext === ctx ? "bg-purple-50 text-purple-700 font-black" : "text-slate-600 hover:bg-slate-50"}`}
                             >
                                 <span>{ctx}</span>
-                                {activeContext === ctx && <Check size={14} strokeWidth={3} />}
+                                {((pathname === "/admin" && ctx === "Platform Management") || activeContext === ctx) && <Check size={14} strokeWidth={3} />}
                             </button>
                         ))}
                     </div>
@@ -175,8 +191,7 @@ export default function Sidebar() {
 
             {/* SUPER ADMIN Button */}
             <div className="p-4 space-y-3 mt-auto border-t border-slate-50">
-                <Link
-                    href="/admin"
+                <button
                     onClick={() => handleSelectContext("Platform Management")}
                     className={`w-full flex items-center gap-3 p-3.5 rounded-2xl font-black text-xs transition-all shadow-md ${pathname === "/admin" || pathname === "/super-admin"
                         ? "bg-purple-700 text-white shadow-purple-200 ring-2 ring-purple-400"
@@ -188,9 +203,9 @@ export default function Sidebar() {
                     </div>
                     <div className="flex flex-col text-left">
                         <span className="uppercase tracking-wider font-black text-[11px]">SUPER ADMIN</span>
-                        <span className="text-[9px] font-medium opacity-80">Barcha tizimlarni boshqaruvchi</span>
+                        <span className="text-[9px] font-medium opacity-80">Platform Management Boshqaruvchi</span>
                     </div>
-                </Link>
+                </button>
 
                 <div className="text-[10px] text-slate-300 font-bold text-center uppercase tracking-widest pt-1">
                     &copy; 2024 Smart-Robo v2.0 PRO
