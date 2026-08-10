@@ -83,6 +83,7 @@ export default function OrdersTable() {
                             <th className="px-6 py-4">Summa</th>
                             <th className="px-6 py-4">Holat</th>
                             <th className="px-6 py-4">Sana</th>
+                            <th className="px-6 py-4">Amallar</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50 text-sm">
@@ -114,6 +115,16 @@ export default function OrdersTable() {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 text-gray-400 font-medium">{order.date}</td>
+                                <td className="px-6 py-4">
+                                    <a
+                                        href={`/invoice/${order.id}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors shadow-sm"
+                                    >
+                                        📄 Schot-faktura
+                                    </a>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
