@@ -13,7 +13,9 @@ export default function AdminDashboardPage() {
     ]);
 
     useEffect(() => {
-        setTimeout(() => setLoading(false), 300);
+        localStorage.setItem("activeContext", "Platform Management");
+        window.dispatchEvent(new Event("contextChange"));
+        setLoading(false);
     }, []);
 
     const filteredStores = stores.filter(s =>
@@ -23,6 +25,7 @@ export default function AdminDashboardPage() {
 
     const handleSwitchToStore = (storeName: string) => {
         localStorage.setItem("activeContext", storeName);
+        window.dispatchEvent(new Event("contextChange"));
         alert(`✅ "${storeName}" do'koniga o'tildi...`);
         window.location.href = "/";
     };
@@ -37,7 +40,7 @@ export default function AdminDashboardPage() {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 animate-in fade-in duration-300">
             {/* Header Banner */}
             <div className="flex flex-wrap justify-between items-center bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 p-8 rounded-3xl text-white shadow-2xl relative overflow-hidden">
                 <div className="relative z-10 space-y-2">
