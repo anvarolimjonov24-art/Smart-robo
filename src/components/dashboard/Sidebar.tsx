@@ -176,9 +176,9 @@ export default function Sidebar() {
             {/* SUPER ADMIN Button */}
             <div className="p-4 space-y-3 mt-auto border-t border-slate-50">
                 <Link
-                    href="/super-admin"
+                    href="/admin"
                     onClick={() => handleSelectContext("Platform Management")}
-                    className={`w-full flex items-center gap-3 p-3.5 rounded-2xl font-black text-xs transition-all shadow-md ${pathname === "/super-admin"
+                    className={`w-full flex items-center gap-3 p-3.5 rounded-2xl font-black text-xs transition-all shadow-md ${pathname === "/admin" || pathname === "/super-admin"
                         ? "bg-purple-700 text-white shadow-purple-200 ring-2 ring-purple-400"
                         : "bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200/60"
                         }`}
