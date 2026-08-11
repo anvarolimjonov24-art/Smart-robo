@@ -2,6 +2,9 @@
 import { useState, useEffect } from "react";
 import { ShieldCheck, Store, Users, CreditCard, ArrowUpRight, CheckCircle2, Search, Building2, RefreshCw } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default function AdminDashboardPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
@@ -13,8 +16,10 @@ export default function AdminDashboardPage() {
     ]);
 
     useEffect(() => {
-        localStorage.setItem("activeContext", "Platform Management");
-        window.dispatchEvent(new Event("contextChange"));
+        if (typeof window !== "undefined") {
+            localStorage.setItem("activeContext", "Platform Management");
+            window.dispatchEvent(new Event("contextChange"));
+        }
         setLoading(false);
     }, []);
 
