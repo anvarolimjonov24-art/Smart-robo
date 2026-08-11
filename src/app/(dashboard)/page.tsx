@@ -32,7 +32,6 @@ import ProductModal from "@/components/dashboard/ProductModal";
 import CategoryModal from "@/components/dashboard/CategoryModal";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 export default function DashboardPage() {
     const [activeContext, setActiveContext] = useState<string>("Shoxparfum");
