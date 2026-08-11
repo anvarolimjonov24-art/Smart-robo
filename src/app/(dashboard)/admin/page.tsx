@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { ShieldCheck, Store, Users, CreditCard, ArrowUpRight, CheckCircle2, Search, Building2, RefreshCw } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 export default function AdminDashboardPage() {
     const [loading, setLoading] = useState(true);
