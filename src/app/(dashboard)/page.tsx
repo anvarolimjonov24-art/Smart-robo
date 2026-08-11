@@ -31,6 +31,9 @@ import RevenueChart from "@/components/dashboard/RevenueChart";
 import ProductModal from "@/components/dashboard/ProductModal";
 import CategoryModal from "@/components/dashboard/CategoryModal";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default function DashboardPage() {
     const [activeContext, setActiveContext] = useState<string>("Shoxparfum");
     const [mounted, setMounted] = useState(false);
@@ -56,12 +59,18 @@ export default function DashboardPage() {
 
     useEffect(() => {
         setMounted(true);
-        const savedCtx = localStorage.getItem("activeContext");
-        if (savedCtx) {
-            setActiveContext(savedCtx);
+
+        if (typeof window !== "undefined") {
+            const path = window.location.pathname;
+            if (path.includes("/admin") || path.includes("/super-admin")) {
+                setActiveContext("Platform Management");
+                localStorage.setItem("activeContext", "Platform Management");
+            } else {
+                const savedCtx = localStorage.getItem("activeContext");
+                if (savedCtx) setActiveContext(savedCtx);
+            }
         }
 
-        // Listen for storage / custom context change events
         const handleContextChange = () => {
             const currentCtx = localStorage.getItem("activeContext");
             if (currentCtx) setActiveContext(currentCtx);
